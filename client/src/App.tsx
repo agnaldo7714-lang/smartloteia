@@ -11,6 +11,9 @@ import Clients from "@/pages/Clients";
 import Lots from "@/pages/Lots";
 import Sales from "@/pages/Sales";
 import Financial from "@/pages/Financial";
+import CRM from "@/pages/CRM";
+import Collections from "@/pages/Collections";
+import Simulator from "@/pages/Simulator";
 import Layout from "@/components/layout/Layout";
 
 function Router() {
@@ -24,10 +27,13 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Dashboard}/>
+        <Route path="/crm" component={CRM}/>
         <Route path="/clientes" component={Clients}/>
         <Route path="/lotes" component={Lots}/>
+        <Route path="/simulador" component={Simulator}/>
         <Route path="/vendas" component={Sales}/>
         <Route path="/financeiro" component={Financial}/>
+        <Route path="/cobrancas" component={Collections}/>
         <Route component={NotFound} />
       </Switch>
     </Layout>
