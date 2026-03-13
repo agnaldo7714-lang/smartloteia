@@ -81,10 +81,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <AvatarImage src="https://i.pravatar.cc/150?u=admin" />
               <AvatarFallback>AD</AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
+            <div className="flex flex-col flex-1">
               <span className="text-sm font-bold text-white">Carlos Diretor</span>
               <span className="text-xs text-emerald-400 font-medium">Administrador</span>
             </div>
+            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-red-500/20" onClick={() => window.location.href = "/"}>
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </aside>
@@ -135,7 +138,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" /> Configurações do Sistema
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive font-semibold">
+                <DropdownMenuItem className="text-destructive font-semibold" onClick={() => window.location.href = "/"}>
                   <LogOut className="mr-2 h-4 w-4" /> Sair da Plataforma
                 </DropdownMenuItem>
               </DropdownMenuContent>
