@@ -20,14 +20,14 @@ import Layout from "@/components/layout/Layout";
 function Router() {
   const [location] = useLocation();
 
-  if (location === "/login") {
+  if (location === "/login" || location === "/") {
     return <Login />;
   }
 
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Dashboard}/>
+        <Route path="/dashboard" component={Dashboard}/>
         <Route path="/crm" component={CRM}/>
         <Route path="/clientes" component={Clients}/>
         <Route path="/lotes" component={Lots}/>

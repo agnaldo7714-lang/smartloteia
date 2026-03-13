@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const navigation = [
-  { name: 'Visão 360°', href: '/', icon: LayoutDashboard },
+  { name: 'Visão 360°', href: '/dashboard', icon: LayoutDashboard },
   { name: 'CRM & Funil', href: '/crm', icon: KanbanSquare },
   { name: 'Mapa de Lotes', href: '/lotes', icon: Map },
   { name: 'Simulador', href: '/simulador', icon: Calculator },
