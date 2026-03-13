@@ -1,4 +1,4 @@
-import { DollarSign, ArrowUpRight, ArrowDownRight, Download, Filter, Search, Plus, CreditCard, Landmark, FileText, BarChart3, Receipt } from "lucide-react";
+import { DollarSign, ArrowUpRight, ArrowDownRight, Download, Filter, Search, Plus, CreditCard, Landmark, FileText, BarChart3, Receipt, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
