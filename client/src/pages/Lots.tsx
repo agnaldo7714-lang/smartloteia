@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Filter, Maximize2, MapPin, CheckCircle2, Home, Info, Droplets, Zap, Wifi } from "lucide-react";
+import { Search, Filter, Maximize2, MapPin, CheckCircle2, Home, Info, Droplets, Zap, Wifi, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
