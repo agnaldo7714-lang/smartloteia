@@ -14,6 +14,7 @@ import Financial from "@/pages/Financial";
 import CRM from "@/pages/CRM";
 import Collections from "@/pages/Collections";
 import Simulator from "@/pages/Simulator";
+import Settings from "@/pages/Settings";
 import Layout from "@/components/layout/Layout";
 
 function Router() {
@@ -34,6 +35,7 @@ function Router() {
         <Route path="/vendas" component={Sales}/>
         <Route path="/financeiro" component={Financial}/>
         <Route path="/cobrancas" component={Collections}/>
+        <Route path="/configuracoes" component={Settings}/>
         <Route component={NotFound} />
       </Switch>
     </Layout>

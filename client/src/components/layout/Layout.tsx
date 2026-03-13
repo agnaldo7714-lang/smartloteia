@@ -37,6 +37,7 @@ const navigation = [
   { name: 'ERP Financeiro', href: '/financeiro', icon: CircleDollarSign },
   { name: 'Cobrança Automática', href: '/cobrancas', icon: AlertTriangle },
   { name: 'Carteira de Clientes', href: '/clientes', icon: Users },
+  { name: 'Config. & Cadastros', href: '/configuracoes', icon: Settings },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
