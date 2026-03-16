@@ -12,6 +12,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 const collectionsData = [
   { id: '1', client: 'Roberto Ferreira', project: 'Bosque das Águas - Q.A L.02', delay: 15, value: 'R$ 1.500,00', status: 'Régua 1 - WhatsApp', risk: 'Baixo', lastContact: 'Ontem' },
@@ -33,12 +34,24 @@ const ReguaStep = ({ active, title, days }: { active: boolean, title: string, da
 );
 
 export default function Collections() {
-  const [successMsg, setSuccessMsg] = useState('');
+  const { toast } = useToast();
+  const [activeFilter, setActiveFilter] = useState('Todos');
 
   const handleAction = (msg: string) => {
-    setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(''), 3000);
+    toast({
+      title: "Automação",
+      description: msg,
+      variant: "default",
+    });
   };
+
+  const handleZap = (client: string) => {
+    handleAction(`Mensagem de WhatsApp enviada para ${client}!`);
+  };
+
+  const filteredData = activeFilter === 'Todos' 
+    ? collectionsData 
+    : collectionsData.filter(item => item.risk === 'Alto');
 
   return (
     <div className="space-y-6">
@@ -50,17 +63,11 @@ export default function Collections() {
           </h1>
           <p className="text-slate-500">Gestão de réguas de cobrança e recuperação de crédito integrada com WhatsApp.</p>
         </div>
-        <div className="flex gap-2 relative">
-          {successMsg && (
-            <div className="absolute -top-12 right-0 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-lg font-bold shadow-sm whitespace-nowrap animate-in fade-in slide-in-from-top-4">
-              <CheckCircle2 className="w-4 h-4 inline mr-2" />
-              {successMsg}
-            </div>
-          )}
-          <Button variant="outline" className="gap-2 bg-white text-slate-700 border-slate-300" onClick={() => handleAction('Acordos gerados e enviados!')}>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2 bg-white text-slate-700 border-slate-300" onClick={() => handleAction('Acordos gerados em PDF e enviados para o e-mail dos clientes.')}>
             <FileText className="h-4 w-4" /> Gerar Acordos
           </Button>
-          <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md" onClick={() => handleAction('Disparo em lote concluído!')}>
+          <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md" onClick={() => handleAction('Disparo em lote concluído! Mensagens de cobrança enviadas no WhatsApp.')}>
             <Send className="h-4 w-4" /> Disparo Lote
           </Button>
         </div>
@@ -152,8 +159,20 @@ export default function Collections() {
             </div>
             
             <div className="flex gap-2">
-               <Badge variant="outline" className="cursor-pointer bg-slate-100 border-slate-200 text-slate-700 font-bold hover:bg-slate-200 px-3 py-1">Todos (24)</Badge>
-               <Badge className="cursor-pointer bg-red-100 text-red-700 hover:bg-red-200 border-0 font-bold px-3 py-1">Risco Alto (4)</Badge>
+               <Badge 
+                 variant={activeFilter === 'Todos' ? 'default' : 'outline'} 
+                 className={`cursor-pointer font-bold px-3 py-1 ${activeFilter === 'Todos' ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'}`}
+                 onClick={() => setActiveFilter('Todos')}
+               >
+                 Todos (24)
+               </Badge>
+               <Badge 
+                 variant={activeFilter === 'Alto' ? 'default' : 'outline'}
+                 className={`cursor-pointer font-bold px-3 py-1 border-0 ${activeFilter === 'Alto' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+                 onClick={() => setActiveFilter('Alto')}
+               >
+                 Risco Alto (4)
+               </Badge>
             </div>
           </div>
         </CardHeader>
@@ -170,7 +189,7 @@ export default function Collections() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {collectionsData.map((item) => (
+              {filteredData.map((item) => (
                 <TableRow key={item.id} className="hover:bg-slate-50 border-slate-100 group transition-colors">
                   <TableCell className="py-4">
                     <div className="flex flex-col">
@@ -202,7 +221,11 @@ export default function Collections() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button size="sm" className="h-8 bg-[#25D366] hover:bg-[#128C7E] text-white shadow-sm gap-1.5 font-bold">
+                      <Button 
+                        size="sm" 
+                        className="h-8 bg-[#25D366] hover:bg-[#128C7E] text-white shadow-sm gap-1.5 font-bold"
+                        onClick={() => handleZap(item.client)}
+                      >
                         <MessageCircle className="w-3.5 h-3.5" /> Zap
                       </Button>
                       <Button size="sm" variant="outline" className="h-8 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 gap-1.5 font-bold">

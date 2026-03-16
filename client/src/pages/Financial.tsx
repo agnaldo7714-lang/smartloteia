@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DollarSign, ArrowUpRight, ArrowDownRight, Download, Filter, Search, Plus, CreditCard, Landmark, FileText, BarChart3, Receipt, AlertCircle } from "lucide-react";
+import { DollarSign, ArrowUpRight, ArrowDownRight, Download, Filter, Search, Plus, CreditCard, Landmark, FileText, BarChart3, Receipt, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 const initialFinancialData = [
   { id: 'REC-101', ref: 'VND-001 / Entrada', client: 'João Silva', amount: '36.000,00', date: '15/03/2026', type: 'Receita', status: 'A Receber', method: 'Boleto' },
@@ -26,9 +27,18 @@ const initialFinancialData = [
 ];
 
 export default function Financial() {
+  const { toast } = useToast();
   const [finances, setFinances] = useState(initialFinancialData);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTransaction, setNewTransaction] = useState({ client: '', amount: '', type: 'Receita' });
+
+  const handleAction = (msg: string) => {
+    toast({
+      title: "Operação Concluída",
+      description: msg,
+      variant: "default",
+    });
+  };
 
   const handleCreateTransaction = () => {
     if (!newTransaction.client || !newTransaction.amount) return;
@@ -57,7 +67,7 @@ export default function Financial() {
           <p className="text-slate-500">Contas a pagar/receber, emissão de boletos e fluxo de caixa.</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" className="gap-2 bg-white text-slate-700">
+          <Button variant="outline" className="gap-2 bg-white text-slate-700" onClick={() => handleAction('Foram gerados e enviados 24 boletos para seus clientes por e-mail.')}>
             <Receipt className="h-4 w-4" /> Emitir Boletos
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

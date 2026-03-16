@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   TrendingUp, 
   Users, 
@@ -10,8 +12,11 @@ import {
   ArrowDownRight,
   Calendar,
   Wallet,
-  Smartphone
+  Smartphone,
+  CheckCircle2,
+  Download
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { 
   AreaChart, 
   Area, 
@@ -42,6 +47,17 @@ const recentSales = [
 ];
 
 export default function Dashboard() {
+  const { toast } = useToast();
+  const [period, setPeriod] = useState('Este Mês');
+
+  const handleAction = (msg: string) => {
+    toast({
+      title: "Sucesso!",
+      description: msg,
+      variant: "default",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -49,12 +65,20 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Visão 360° do Negócio</h1>
           <p className="text-slate-500">Métricas em tempo real de vendas, financeiro e lotes.</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="bg-white">
-            <Calendar className="mr-2 h-4 w-4" /> Este Mês
-          </Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
-            Gerar Relatório
+        <div className="flex items-center gap-3">
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-[140px] bg-white">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Hoje">Hoje</SelectItem>
+              <SelectItem value="Esta Semana">Esta Semana</SelectItem>
+              <SelectItem value="Este Mês">Este Mês</SelectItem>
+              <SelectItem value="Este Ano">Este Ano</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleAction('Relatório consolidado gerado e baixado com sucesso!')}>
+            <Download className="h-4 w-4" /> Gerar Relatório
           </Button>
         </div>
       </div>
