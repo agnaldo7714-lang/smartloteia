@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { DollarSign, ArrowUpRight, ArrowDownRight, Download, Filter, Search, Plus, CreditCard, Landmark, FileText, BarChart3, Receipt, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +13,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const financialData = [
+const initialFinancialData = [
   { id: 'REC-101', ref: 'VND-001 / Entrada', client: 'João Silva', amount: '36.000,00', date: '15/03/2026', type: 'Receita', status: 'A Receber', method: 'Boleto' },
   { id: 'REC-102', ref: 'VND-003 / Parc. 1/60', client: 'Empresa XYZ', amount: '4.150,00', date: '10/03/2026', type: 'Receita', status: 'Recebido', method: 'PIX' },
   { id: 'COM-050', ref: 'VND-001 / Comissão', client: 'Corretor Carlos', amount: '9.000,00', date: '16/03/2026', type: 'Despesa', status: 'A Pagar', method: 'Transferência' },
@@ -22,6 +26,29 @@ const financialData = [
 ];
 
 export default function Financial() {
+  const [finances, setFinances] = useState(initialFinancialData);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newTransaction, setNewTransaction] = useState({ client: '', amount: '', type: 'Receita' });
+
+  const handleCreateTransaction = () => {
+    if (!newTransaction.client || !newTransaction.amount) return;
+    
+    const transactionToAdd = {
+      id: `${newTransaction.type === 'Receita' ? 'REC' : 'DES'}-${100 + finances.length}`,
+      ref: 'Lançamento Manual',
+      client: newTransaction.client,
+      amount: newTransaction.amount,
+      date: new Date().toLocaleDateString('pt-BR'),
+      type: newTransaction.type,
+      status: newTransaction.type === 'Receita' ? 'A Receber' : 'A Pagar',
+      method: 'Transferência'
+    };
+    
+    setFinances([transactionToAdd, ...finances]);
+    setNewTransaction({ client: '', amount: '', type: 'Receita' });
+    setIsDialogOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -33,9 +60,45 @@ export default function Financial() {
           <Button variant="outline" className="gap-2 bg-white text-slate-700">
             <Receipt className="h-4 w-4" /> Emitir Boletos
           </Button>
-          <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
-            <Plus className="h-4 w-4" /> Novo Lançamento
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
+                <Plus className="h-4 w-4" /> Novo Lançamento
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Novo Lançamento Financeiro</DialogTitle>
+                <DialogDescription>
+                  Registre uma nova receita ou despesa no sistema.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label>Tipo de Lançamento</Label>
+                  <Select value={newTransaction.type} onValueChange={v => setNewTransaction({...newTransaction, type: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Receita">Receita (A Receber)</SelectItem>
+                      <SelectItem value="Despesa">Despesa (A Pagar)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Cliente / Fornecedor</Label>
+                  <Input placeholder="Nome..." value={newTransaction.client} onChange={e => setNewTransaction({...newTransaction, client: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor (R$)</Label>
+                  <Input placeholder="0,00" value={newTransaction.amount} onChange={e => setNewTransaction({...newTransaction, amount: e.target.value})} />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCreateTransaction}>Salvar Lançamento</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -126,7 +189,7 @@ export default function Financial() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {financialData.map((item) => (
+              {finances.map((item) => (
                 <TableRow key={item.id} className="hover:bg-slate-50 border-slate-100 transition-colors">
                   <TableCell className="font-semibold text-slate-700 whitespace-nowrap">{item.date}</TableCell>
                   <TableCell>

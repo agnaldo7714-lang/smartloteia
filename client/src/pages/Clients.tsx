@@ -19,8 +19,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
-const clientsData = [
+const initialClientsData = [
   { id: '1', name: 'João Silva', cpf: '123.456.789-00', email: 'joao@email.com', phone: '(11) 98765-4321', status: 'Ativo', date: '10/03/2026', contracts: 1 },
   { id: '2', name: 'Maria Santos Oliveira', cpf: '234.567.890-11', email: 'maria.santos@email.com', phone: '(11) 97654-3210', status: 'Ativo', date: '08/03/2026', contracts: 2 },
   { id: '3', name: 'Carlos Ferreira', cpf: '345.678.901-22', email: 'carlos.f@email.com', phone: '(11) 96543-2109', status: 'Inativo', date: '05/03/2026', contracts: 0 },
@@ -29,6 +31,28 @@ const clientsData = [
 
 export default function Clients() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [clients, setClients] = useState(initialClientsData);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newClient, setNewClient] = useState({ name: '', cpf: '', email: '', phone: '' });
+
+  const handleCreateClient = () => {
+    if (!newClient.name) return;
+    
+    const clientToAdd = {
+      id: `${clients.length + 1}`,
+      name: newClient.name,
+      cpf: newClient.cpf || '000.000.000-00',
+      email: newClient.email || 'email@exemplo.com',
+      phone: newClient.phone || '(00) 00000-0000',
+      status: 'Ativo',
+      date: new Date().toLocaleDateString('pt-BR'),
+      contracts: 0
+    };
+    
+    setClients([clientToAdd, ...clients]);
+    setNewClient({ name: '', cpf: '', email: '', phone: '' });
+    setIsDialogOpen(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -37,9 +61,43 @@ export default function Clients() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Carteira de Clientes</h1>
           <p className="text-slate-500">Gestão centralizada de compradores e prospects.</p>
         </div>
-        <Button className="shrink-0 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
-          <Plus className="h-4 w-4" /> Novo Cadastro
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="shrink-0 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
+              <Plus className="h-4 w-4" /> Novo Cadastro
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Novo Cliente</DialogTitle>
+              <DialogDescription>
+                Cadastre um novo lead ou cliente na base.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label>Nome Completo</Label>
+                <Input placeholder="Ex: João da Silva" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>CPF</Label>
+                <Input placeholder="000.000.000-00" value={newClient.cpf} onChange={e => setNewClient({...newClient, cpf: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>E-mail</Label>
+                <Input placeholder="email@exemplo.com" value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone / WhatsApp</Label>
+                <Input placeholder="(11) 99999-9999" value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})} />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCreateClient}>Salvar Cliente</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card className="shadow-sm border-slate-200 bg-white">
@@ -72,7 +130,7 @@ export default function Clients() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clientsData.map((client) => (
+              {clients.map((client) => (
                 <TableRow key={client.id} className="hover:bg-slate-50 transition-colors group">
                   <TableCell>
                     <div className="flex items-center gap-3">

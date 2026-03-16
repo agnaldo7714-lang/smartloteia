@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { AlertCircle, Search, Filter, Phone, MessageCircle, FileText, Send, Calendar, ArrowRight, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,13 @@ const ReguaStep = ({ active, title, days }: { active: boolean, title: string, da
 );
 
 export default function Collections() {
+  const [successMsg, setSuccessMsg] = useState('');
+
+  const handleAction = (msg: string) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -42,11 +50,17 @@ export default function Collections() {
           </h1>
           <p className="text-slate-500">Gestão de réguas de cobrança e recuperação de crédito integrada com WhatsApp.</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 bg-white text-slate-700 border-slate-300">
+        <div className="flex gap-2 relative">
+          {successMsg && (
+            <div className="absolute -top-12 right-0 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-lg font-bold shadow-sm whitespace-nowrap animate-in fade-in slide-in-from-top-4">
+              <CheckCircle2 className="w-4 h-4 inline mr-2" />
+              {successMsg}
+            </div>
+          )}
+          <Button variant="outline" className="gap-2 bg-white text-slate-700 border-slate-300" onClick={() => handleAction('Acordos gerados e enviados!')}>
             <FileText className="h-4 w-4" /> Gerar Acordos
           </Button>
-          <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
+          <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md" onClick={() => handleAction('Disparo em lote concluído!')}>
             <Send className="h-4 w-4" /> Disparo Lote
           </Button>
         </div>

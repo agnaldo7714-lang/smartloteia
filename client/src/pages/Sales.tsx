@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Plus, Search, Filter, Download, FileSignature, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +12,10 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
-const salesData = [
+const initialSalesData = [
   { id: 'VND-001', client: 'João Silva', project: 'Bosque das Águas', unit: 'Q.A L.02', value: '180.000', date: '12/03/2026', broker: 'Carlos', status: 'Assinado', payment: 'Financiado' },
   { id: 'VND-002', client: 'Maria Santos', project: 'Jardins do Sul', unit: 'Q.C L.12', value: '125.000', date: '10/03/2026', broker: 'Ana', status: 'Aguardando Ass.', payment: 'À Vista' },
   { id: 'VND-003', client: 'Empresa XYZ', project: 'Bosque das Águas', unit: 'Q.B L.10', value: '250.000', date: '05/03/2026', broker: 'Direto', status: 'Assinado', payment: 'Financiado' },
@@ -26,6 +29,30 @@ const StatusIcon = ({ status }: { status: string }) => {
 };
 
 export default function Sales() {
+  const [sales, setSales] = useState(initialSalesData);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newSale, setNewSale] = useState({ client: '', project: '', value: '' });
+
+  const handleCreateSale = () => {
+    if (!newSale.client || !newSale.project) return;
+    
+    const saleToAdd = {
+      id: `VND-00${sales.length + 1}`,
+      client: newSale.client,
+      project: newSale.project,
+      unit: 'Q.X L.XX', // mock
+      value: newSale.value || '100.000',
+      date: new Date().toLocaleDateString('pt-BR'),
+      broker: 'Corretor Atual',
+      status: 'Aguardando Ass.',
+      payment: 'Financiado'
+    };
+    
+    setSales([saleToAdd, ...sales]);
+    setNewSale({ client: '', project: '', value: '' });
+    setIsDialogOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -37,9 +64,39 @@ export default function Sales() {
           <Button variant="outline" className="gap-2 bg-white text-slate-700">
             <Download className="h-4 w-4" /> Exportar Relatório
           </Button>
-          <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
-            <FileSignature className="h-4 w-4" /> Nova Venda
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
+                <FileSignature className="h-4 w-4" /> Nova Venda
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Registrar Nova Venda</DialogTitle>
+                <DialogDescription>
+                  Preencha os dados do cliente e contrato para gerar uma nova venda.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label>Nome do Cliente</Label>
+                  <Input placeholder="Ex: João da Silva" value={newSale.client} onChange={e => setNewSale({...newSale, client: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Empreendimento</Label>
+                  <Input placeholder="Ex: Bosque das Águas" value={newSale.project} onChange={e => setNewSale({...newSale, project: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor da Venda (R$)</Label>
+                  <Input placeholder="150.000" value={newSale.value} onChange={e => setNewSale({...newSale, value: e.target.value})} />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCreateSale}>Salvar Venda</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -107,7 +164,7 @@ export default function Sales() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {salesData.map((sale) => (
+              {sales.map((sale) => (
                 <TableRow key={sale.id} className="hover:bg-slate-50 cursor-pointer transition-colors group">
                   <TableCell className="font-bold text-slate-800">{sale.id}</TableCell>
                   <TableCell className="font-bold text-slate-700">{sale.client}</TableCell>

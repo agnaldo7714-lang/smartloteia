@@ -29,6 +29,7 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState("users");
   const [users, setUsers] = useState(initialUsersData);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Corretor' });
   
   const [projects, setProjects] = useState(projectsData);
@@ -112,17 +113,22 @@ export default function Settings() {
                 <CardTitle className="text-lg">Equipe e Usuários</CardTitle>
                 <CardDescription>Cadastre e gerencie corretores, gerentes e administradores.</CardDescription>
               </div>
-              <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+              <Dialog open={isUserDialogOpen || !!editingUser} onOpenChange={(open) => {
+                if(!open) {
+                  setIsUserDialogOpen(false);
+                  setEditingUser(null);
+                }
+              }}>
                 <DialogTrigger asChild>
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2" onClick={() => setIsUserDialogOpen(true)}>
                     <UserPlus className="w-4 h-4" /> Novo Usuário
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   <DialogHeader>
-                    <DialogTitle>Cadastrar Novo Usuário</DialogTitle>
+                    <DialogTitle>{editingUser ? "Editar Usuário" : "Cadastrar Novo Usuário"}</DialogTitle>
                     <DialogDescription>
-                      Adicione um corretor, administrador ou funcionário do financeiro.
+                      {editingUser ? "Atualize as informações do usuário." : "Adicione um corretor, administrador ou funcionário do financeiro."}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -131,8 +137,8 @@ export default function Settings() {
                         <Label>Nome Completo</Label>
                         <Input 
                           placeholder="Ex: João da Silva" 
-                          value={newUser.name}
-                          onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                          value={editingUser ? editingUser.name : newUser.name}
+                          onChange={(e) => editingUser ? setEditingUser({...editingUser, name: e.target.value}) : setNewUser({...newUser, name: e.target.value})}
                         />
                       </div>
                       <div className="space-y-2">
@@ -145,41 +151,52 @@ export default function Settings() {
                       <Input 
                         type="email" 
                         placeholder="nome@empresa.com.br" 
-                        value={newUser.email}
-                        onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                        value={editingUser ? editingUser.email : newUser.email}
+                        onChange={(e) => editingUser ? setEditingUser({...editingUser, email: e.target.value}) : setNewUser({...newUser, email: e.target.value})}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label>Perfil de Acesso</Label>
                       <Select 
-                        value={newUser.role} 
-                        onValueChange={(val) => setNewUser({...newUser, role: val})}
+                        value={editingUser ? editingUser.role : newUser.role} 
+                        onValueChange={(val) => editingUser ? setEditingUser({...editingUser, role: val}) : setNewUser({...newUser, role: val})}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o perfil" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="admin">Administrador (Acesso Total)</SelectItem>
-                          <SelectItem value="corretor">Corretor (Vendas e Simulação)</SelectItem>
-                          <SelectItem value="gerente">Gerente de Vendas</SelectItem>
-                          <SelectItem value="financeiro">Financeiro (Acesso Restrito)</SelectItem>
+                          <SelectItem value="Administrador">Administrador (Acesso Total)</SelectItem>
+                          <SelectItem value="Corretor">Corretor (Vendas e Simulação)</SelectItem>
+                          <SelectItem value="Gerente">Gerente de Vendas</SelectItem>
+                          <SelectItem value="Financeiro">Financeiro (Acesso Restrito)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Senha Inicial</Label>
-                        <Input type="password" placeholder="******" />
+                    {!editingUser && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Senha Inicial</Label>
+                          <Input type="password" placeholder="******" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>CRECI (Se corretor)</Label>
+                          <Input placeholder="Ex: 12345-F" />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label>CRECI (Se corretor)</Label>
-                        <Input placeholder="Ex: 12345-F" />
-                      </div>
-                    </div>
+                    )}
                   </div>
                   <div className="flex justify-end gap-3">
-                    <Button variant="outline" onClick={() => setIsUserDialogOpen(false)}>Cancelar</Button>
-                    <Button className="bg-emerald-600" onClick={handleCreateUser}>Salvar Cadastro</Button>
+                    <Button variant="outline" onClick={() => { setIsUserDialogOpen(false); setEditingUser(null); }}>Cancelar</Button>
+                    <Button className="bg-emerald-600" onClick={() => {
+                      if (editingUser) {
+                        setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
+                        setEditingUser(null);
+                      } else {
+                        handleCreateUser();
+                      }
+                    }}>
+                      {editingUser ? "Salvar Alterações" : "Salvar Cadastro"}
+                    </Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -224,7 +241,14 @@ export default function Settings() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500"><Edit2 className="h-4 w-4" /></Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-slate-500"
+                            onClick={() => setEditingUser(user)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
                           <Button 
                             variant="ghost" 
                             size="icon" 
