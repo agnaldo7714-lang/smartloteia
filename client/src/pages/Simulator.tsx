@@ -8,13 +8,23 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Simulator() {
+  const { toast } = useToast();
   const [propertyValue, setPropertyValue] = useState(180000);
   const [downPaymentPerc, setDownPaymentPerc] = useState(15);
   const [installments, setInstallments] = useState(120);
   const [interestRate, setInterestRate] = useState(0.85); // 0.85% ao mês
   const [includeIGPM, setIncludeIGPM] = useState(true);
+
+  const handleAction = (msg: string) => {
+    toast({
+      title: "Simulador",
+      description: msg,
+      variant: "default",
+    });
+  };
 
   const downPayment = (propertyValue * downPaymentPerc) / 100;
   const financedAmount = propertyValue - downPayment;
@@ -32,10 +42,10 @@ export default function Simulator() {
           <p className="text-slate-500">Crie simulações de financiamento direto com a loteadora e envie ao cliente.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 bg-white text-slate-700">
+          <Button variant="outline" className="gap-2 bg-white text-slate-700" onClick={() => handleAction('Proposta salva com sucesso no sistema!')}>
             <Save className="h-4 w-4" /> Salvar Proposta
           </Button>
-          <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
+          <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md" onClick={() => handleAction('Proposta enviada para o WhatsApp do cliente!')}>
             <Send className="h-4 w-4" /> Enviar por WhatsApp
           </Button>
         </div>
@@ -243,10 +253,10 @@ export default function Simulator() {
 
             <Card className="shadow-sm border-slate-200">
               <CardContent className="p-4 flex gap-3">
-                <Button className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-white shadow-sm font-bold gap-2">
+                <Button className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-white shadow-sm font-bold gap-2" onClick={() => handleAction('Link da proposta enviado para o WhatsApp!')}>
                   <Send className="w-4 h-4" /> Enviar Proposta
                 </Button>
-                <Button variant="outline" size="icon" className="border-slate-300 text-slate-600 hover:bg-slate-50">
+                <Button variant="outline" size="icon" className="border-slate-300 text-slate-600 hover:bg-slate-50" onClick={() => handleAction('Link copiado para a área de transferência!')}>
                   <Copy className="w-4 h-4" />
                 </Button>
               </CardContent>

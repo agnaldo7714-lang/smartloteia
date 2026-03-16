@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { Search, Filter, Maximize2, MapPin, CheckCircle2, Home, Info, Droplets, Zap, Wifi, Plus } from "lucide-react";
+import { Search, Filter, Maximize2, MapPin, CheckCircle2, Home, Info, Droplets, Zap, Wifi, Plus, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 // Generate sophisticated map data
 const generateLots = () => {
@@ -41,6 +44,45 @@ const getStatusColor = (status: string) => {
 
 export default function Lots() {
   const [zoom, setZoom] = useState(1);
+  const [selectedMap, setSelectedMap] = useState("bosque");
+  const [lotsData, setLotsData] = useState(mapLotsData);
+  const [selectedLot, setSelectedLot] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  const { toast } = useToast();
+
+  const handleAction = (msg: string) => {
+    toast({
+      title: "Sucesso!",
+      description: msg,
+      variant: "default",
+    });
+  };
+
+  const handleMapChange = (val: string) => {
+    setSelectedMap(val);
+    // Regenerate data to simulate different map
+    setLotsData(generateLots());
+    toast({
+      title: "Mapa Alterado",
+      description: `Visualizando ${val === 'bosque' ? 'Residencial Bosque das Águas' : 'Jardins do Sul'}`,
+    });
+  };
+
+  const openEditLot = (lot: any) => {
+    setSelectedLot({...lot});
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveLot = () => {
+    if (!selectedLot) return;
+    setLotsData(lotsData.map(l => l.id === selectedLot.id ? selectedLot : l));
+    setIsEditDialogOpen(false);
+    toast({
+      title: "Lote Atualizado",
+      description: `As informações do lote ${selectedLot.block}-${selectedLot.lot} foram salvas.`,
+    });
+  };
 
   return (
     <div className="space-y-6 flex flex-col h-[calc(100vh-8rem)]">
@@ -50,7 +92,7 @@ export default function Lots() {
           <p className="text-slate-500">Espelho de vendas interativo com disponibilidade em tempo real.</p>
         </div>
         <div className="flex gap-2">
-          <Select defaultValue="bosque">
+          <Select value={selectedMap} onValueChange={handleMapChange}>
             <SelectTrigger className="w-[240px] bg-white border-slate-300 font-medium">
               <SelectValue placeholder="Selecione o Empreendimento" />
             </SelectTrigger>
@@ -68,15 +110,15 @@ export default function Lots() {
           <div className="flex gap-4 items-center">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-md">
               <div className="w-3 h-3 rounded-sm bg-emerald-500 shadow-sm"></div>
-              <span className="text-sm font-semibold text-slate-700">Disponível ({mapLotsData.filter(l => l.status === 'Disponível').length})</span>
+              <span className="text-sm font-semibold text-slate-700">Disponível ({lotsData.filter(l => l.status === 'Disponível').length})</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-md">
               <div className="w-3 h-3 rounded-sm bg-amber-400 shadow-sm"></div>
-              <span className="text-sm font-semibold text-slate-700">Reservado ({mapLotsData.filter(l => l.status === 'Reservado').length})</span>
+              <span className="text-sm font-semibold text-slate-700">Reservado ({lotsData.filter(l => l.status === 'Reservado').length})</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-md">
               <div className="w-3 h-3 rounded-sm bg-slate-300 shadow-sm"></div>
-              <span className="text-sm font-semibold text-slate-700">Vendido ({mapLotsData.filter(l => l.status === 'Vendido').length})</span>
+              <span className="text-sm font-semibold text-slate-700">Vendido ({lotsData.filter(l => l.status === 'Vendido').length})</span>
             </div>
           </div>
 
@@ -137,7 +179,7 @@ export default function Lots() {
                     </div>
                     
                     <div className="grid grid-cols-4 gap-1">
-                      {mapLotsData.filter(l => l.block === block).map(lot => (
+                      {lotsData.filter(l => l.block === block).map(lot => (
                         <Tooltip key={lot.id} delayDuration={100}>
                           <TooltipTrigger asChild>
                             <div 
@@ -185,10 +227,15 @@ export default function Lots() {
                             </div>
                             {lot.status === 'Disponível' && (
                               <div className="bg-slate-100 p-2 flex gap-2">
-                                <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs">Simular</Button>
-                                <Button size="sm" variant="outline" className="w-full text-xs">Reservar</Button>
+                                <Button size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs" onClick={() => handleAction('Redirecionando para o simulador...')}>Simular</Button>
+                                <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => handleAction(`Lote ${lot.block}-${lot.lot} reservado com sucesso!`)}>Reservar</Button>
                               </div>
                             )}
+                            <div className="bg-slate-200 p-2 border-t border-slate-300">
+                              <Button size="sm" variant="ghost" className="w-full text-xs h-7 text-slate-600 hover:text-slate-900" onClick={() => openEditLot(lot)}>
+                                <Edit2 className="w-3 h-3 mr-2" /> Editar Lote
+                              </Button>
+                            </div>
                           </TooltipContent>
                         </Tooltip>
                       ))}
@@ -202,6 +249,52 @@ export default function Lots() {
         </CardContent>
       </Card>
       
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Lote {selectedLot?.block}-{selectedLot?.lot}</DialogTitle>
+            <DialogDescription>
+              Ajuste as características e disponibilidade deste lote.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedLot && (
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={selectedLot.status} onValueChange={v => setSelectedLot({...selectedLot, status: v})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Disponível">Disponível</SelectItem>
+                    <SelectItem value="Reservado">Reservado</SelectItem>
+                    <SelectItem value="Vendido">Vendido</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Área (m²)</Label>
+                  <Input type="number" value={selectedLot.area} onChange={e => setSelectedLot({...selectedLot, area: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Frente (m)</Label>
+                  <Input type="number" value={selectedLot.front} onChange={e => setSelectedLot({...selectedLot, front: e.target.value})} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Valor Base (R$)</Label>
+                <Input value={selectedLot.price} onChange={e => setSelectedLot({...selectedLot, price: e.target.value})} />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleSaveLot}>Salvar Lote</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <style>{`
         .pattern-grid {
           background-image: radial-gradient(#cbd5e1 1px, transparent 1px);

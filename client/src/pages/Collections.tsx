@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertCircle, Search, Filter, Phone, MessageCircle, FileText, Send, Calendar, ArrowRight, CheckCircle2, Clock } from "lucide-react";
+import { AlertCircle, Search, Filter, Phone, MessageCircle, FileText, Send, Calendar, ArrowRight, CheckCircle2, Clock, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,9 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 const collectionsData = [
@@ -36,6 +39,9 @@ const ReguaStep = ({ active, title, days }: { active: boolean, title: string, da
 export default function Collections() {
   const { toast } = useToast();
   const [activeFilter, setActiveFilter] = useState('Todos');
+  const [collections, setCollections] = useState(collectionsData);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedAgreement, setSelectedAgreement] = useState<any>(null);
 
   const handleAction = (msg: string) => {
     toast({
@@ -49,9 +55,24 @@ export default function Collections() {
     handleAction(`Mensagem de WhatsApp enviada para ${client}!`);
   };
 
+  const openEditAgreement = (agreement: any) => {
+    setSelectedAgreement({...agreement});
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveAgreement = () => {
+    if (!selectedAgreement) return;
+    setCollections(collections.map(c => c.id === selectedAgreement.id ? selectedAgreement : c));
+    setIsEditDialogOpen(false);
+    toast({
+      title: "Acordo Atualizado",
+      description: `O acordo do cliente ${selectedAgreement.client} foi salvo.`,
+    });
+  };
+
   const filteredData = activeFilter === 'Todos' 
-    ? collectionsData 
-    : collectionsData.filter(item => item.risk === 'Alto');
+    ? collections 
+    : collections.filter(item => item.risk === 'Alto');
 
   return (
     <div className="space-y-6">
@@ -223,13 +244,18 @@ export default function Collections() {
                     <div className="flex justify-end gap-2">
                       <Button 
                         size="sm" 
+                        variant="outline"
+                        className="h-8 border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm font-bold px-2"
+                        onClick={() => openEditAgreement(item)}
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button 
+                        size="sm" 
                         className="h-8 bg-[#25D366] hover:bg-[#128C7E] text-white shadow-sm gap-1.5 font-bold"
                         onClick={() => handleZap(item.client)}
                       >
                         <MessageCircle className="w-3.5 h-3.5" /> Zap
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-8 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 gap-1.5 font-bold">
-                        <Phone className="w-3.5 h-3.5" /> Ligar
                       </Button>
                     </div>
                   </TableCell>
@@ -239,6 +265,58 @@ export default function Collections() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Visualizar e Editar Acordo</DialogTitle>
+            <DialogDescription>
+              Ajuste as condições da dívida ou mude o status da régua de cobrança.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedAgreement && (
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label>Cliente</Label>
+                <Input value={selectedAgreement.client} disabled className="bg-slate-50" />
+              </div>
+              <div className="space-y-2">
+                <Label>Contrato / Lote</Label>
+                <Input value={selectedAgreement.project} disabled className="bg-slate-50" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Valor Devido</Label>
+                  <Input value={selectedAgreement.value} onChange={e => setSelectedAgreement({...selectedAgreement, value: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Atraso (dias)</Label>
+                  <Input type="number" value={selectedAgreement.delay} onChange={e => setSelectedAgreement({...selectedAgreement, delay: Number(e.target.value)})} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Status na Régua</Label>
+                <Select value={selectedAgreement.status} onValueChange={v => setSelectedAgreement({...selectedAgreement, status: v})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Lembrete Amigável">Lembrete Amigável</SelectItem>
+                    <SelectItem value="Régua 1 - WhatsApp">Régua 1 - WhatsApp</SelectItem>
+                    <SelectItem value="Régua 2 - Ligação">Régua 2 - Ligação</SelectItem>
+                    <SelectItem value="Régua 3 - Notificação">Régua 3 - Notificação</SelectItem>
+                    <SelectItem value="Régua 4 - Extrajudicial">Régua 4 - Extrajudicial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleSaveAgreement}>Salvar Acordo</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
