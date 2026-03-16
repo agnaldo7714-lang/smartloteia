@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-const usersData = [
+const initialUsersData = [
   { id: 1, name: 'Carlos Diretor', role: 'Administrador', email: 'carlos@smartlote.com', status: 'Ativo', avatar: 'https://i.pravatar.cc/150?u=admin' },
   { id: 2, name: 'João Silva', role: 'Corretor', email: 'joao.corretor@email.com', status: 'Ativo', avatar: 'https://i.pravatar.cc/150?u=joao' },
   { id: 3, name: 'Mariana Costa', role: 'Financeiro', email: 'mariana.fin@smartlote.com', status: 'Ativo', avatar: 'https://i.pravatar.cc/150?u=mari' },
@@ -27,6 +27,34 @@ const projectsData = [
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("users");
+  const [users, setUsers] = useState(initialUsersData);
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Corretor' });
+
+  const handleCreateUser = () => {
+    if (!newUser.name || !newUser.email) return;
+
+    const roleName = newUser.role === 'admin' ? 'Administrador' : 
+                     newUser.role === 'financeiro' ? 'Financeiro' : 
+                     newUser.role === 'gerente' ? 'Gerente' : 'Corretor';
+
+    const userToAdd = {
+      id: users.length + 1,
+      name: newUser.name,
+      email: newUser.email,
+      role: roleName,
+      status: 'Ativo',
+      avatar: `https://i.pravatar.cc/150?u=${newUser.email}`
+    };
+
+    setUsers([userToAdd, ...users]);
+    setNewUser({ name: '', email: '', role: 'Corretor' });
+    setIsUserDialogOpen(false);
+  };
+
+  const handleRemoveUser = (id: number) => {
+    setUsers(users.filter(u => u.id !== id));
+  };
 
   return (
     <div className="space-y-6">
@@ -58,7 +86,7 @@ export default function Settings() {
                 <CardTitle className="text-lg">Equipe e Usuários</CardTitle>
                 <CardDescription>Cadastre e gerencie corretores, gerentes e administradores.</CardDescription>
               </div>
-              <Dialog>
+              <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
                     <UserPlus className="w-4 h-4" /> Novo Usuário
@@ -75,7 +103,11 @@ export default function Settings() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Nome Completo</Label>
-                        <Input placeholder="Ex: João da Silva" />
+                        <Input 
+                          placeholder="Ex: João da Silva" 
+                          value={newUser.name}
+                          onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>CPF</Label>
@@ -84,11 +116,19 @@ export default function Settings() {
                     </div>
                     <div className="space-y-2">
                       <Label>Email Corporativo</Label>
-                      <Input type="email" placeholder="nome@empresa.com.br" />
+                      <Input 
+                        type="email" 
+                        placeholder="nome@empresa.com.br" 
+                        value={newUser.email}
+                        onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Perfil de Acesso</Label>
-                      <Select>
+                      <Select 
+                        value={newUser.role} 
+                        onValueChange={(val) => setNewUser({...newUser, role: val})}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o perfil" />
                         </SelectTrigger>
@@ -112,8 +152,8 @@ export default function Settings() {
                     </div>
                   </div>
                   <div className="flex justify-end gap-3">
-                    <Button variant="outline">Cancelar</Button>
-                    <Button className="bg-emerald-600">Salvar Cadastro</Button>
+                    <Button variant="outline" onClick={() => setIsUserDialogOpen(false)}>Cancelar</Button>
+                    <Button className="bg-emerald-600" onClick={handleCreateUser}>Salvar Cadastro</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -129,7 +169,7 @@ export default function Settings() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {usersData.map((user) => (
+                  {users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
@@ -146,6 +186,7 @@ export default function Settings() {
                           ${user.role === 'Administrador' ? 'bg-purple-100 text-purple-700 border-purple-200' : ''}
                           ${user.role === 'Corretor' ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
                           ${user.role === 'Financeiro' ? 'bg-amber-100 text-amber-700 border-amber-200' : ''}
+                          ${user.role === 'Gerente' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : ''}
                         `}>
                           {user.role}
                         </Badge>
@@ -158,7 +199,14 @@ export default function Settings() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500"><Edit2 className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-500 hover:bg-red-50"
+                            onClick={() => handleRemoveUser(user.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
