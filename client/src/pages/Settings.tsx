@@ -30,6 +30,10 @@ export default function Settings() {
   const [users, setUsers] = useState(initialUsersData);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Corretor' });
+  
+  const [projects, setProjects] = useState(projectsData);
+  const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
+  const [newProject, setNewProject] = useState({ name: '', city: '', totalLots: '' });
 
   const handleCreateUser = () => {
     if (!newUser.name || !newUser.email) return;
@@ -54,6 +58,28 @@ export default function Settings() {
 
   const handleRemoveUser = (id: number) => {
     setUsers(users.filter(u => u.id !== id));
+  };
+
+  const handleCreateProject = () => {
+    if (!newProject.name || !newProject.city || !newProject.totalLots) return;
+
+    const projectToAdd = {
+      id: projects.length + 1,
+      name: newProject.name,
+      city: newProject.city,
+      totalLots: parseInt(newProject.totalLots),
+      available: parseInt(newProject.totalLots),
+      status: 'Breve Lançamento',
+      img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop'
+    };
+
+    setProjects([projectToAdd, ...projects]);
+    setNewProject({ name: '', city: '', totalLots: '' });
+    setIsProjectDialogOpen(false);
+  };
+
+  const handleRemoveProject = (id: number) => {
+    setProjects(projects.filter(p => p.id !== id));
   };
 
   return (
@@ -225,7 +251,7 @@ export default function Settings() {
                 <CardTitle className="text-lg">Gestão de Loteamentos</CardTitle>
                 <CardDescription>Cadastre novos empreendimentos, mapas e lotes.</CardDescription>
               </div>
-              <Dialog>
+              <Dialog open={isProjectDialogOpen} onOpenChange={setIsProjectDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
                     <MapPin className="w-4 h-4" /> Lançar Empreendimento
@@ -241,7 +267,11 @@ export default function Settings() {
                   <div className="grid gap-5 py-4">
                     <div className="space-y-2">
                       <Label>Nome do Empreendimento</Label>
-                      <Input placeholder="Ex: Residencial Flores do Campo" />
+                      <Input 
+                        placeholder="Ex: Residencial Flores do Campo" 
+                        value={newProject.name}
+                        onChange={(e) => setNewProject({...newProject, name: e.target.value})}
+                      />
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
@@ -251,14 +281,23 @@ export default function Settings() {
                       </div>
                       <div className="space-y-2">
                         <Label>Cidade / Estado</Label>
-                        <Input placeholder="São Paulo/SP" />
+                        <Input 
+                          placeholder="São Paulo/SP" 
+                          value={newProject.city}
+                          onChange={(e) => setNewProject({...newProject, city: e.target.value})}
+                        />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Total de Lotes</Label>
-                        <Input type="number" placeholder="Ex: 500" />
+                        <Input 
+                          type="number" 
+                          placeholder="Ex: 500" 
+                          value={newProject.totalLots}
+                          onChange={(e) => setNewProject({...newProject, totalLots: e.target.value})}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Tamanho Padrão (m²)</Label>
@@ -279,15 +318,15 @@ export default function Settings() {
                     </div>
                   </div>
                   <div className="flex justify-end gap-3 sticky bottom-0 bg-white pt-4 pb-2 border-t mt-4">
-                    <Button variant="outline">Cancelar</Button>
-                    <Button className="bg-emerald-600">Salvar e Continuar</Button>
+                    <Button variant="outline" onClick={() => setIsProjectDialogOpen(false)}>Cancelar</Button>
+                    <Button className="bg-emerald-600" onClick={handleCreateProject}>Salvar e Continuar</Button>
                   </div>
                 </DialogContent>
               </Dialog>
             </CardHeader>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projectsData.map((project) => (
+                {projects.map((project) => (
                   <Card key={project.id} className="overflow-hidden shadow-md border-slate-200 group">
                     <div className="h-32 w-full overflow-hidden relative">
                       <img src={project.img} alt={project.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -314,7 +353,14 @@ export default function Settings() {
                     </CardContent>
                     <div className="bg-slate-50 p-3 border-t border-slate-100 flex justify-between gap-2">
                       <Button variant="outline" size="sm" className="flex-1 bg-white text-xs">Editar Lotes</Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-red-500 hover:bg-red-50"
+                        onClick={() => handleRemoveProject(project.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </Card>
                 ))}

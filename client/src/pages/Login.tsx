@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Building2, Sparkles, MapPin, ShieldAlert, ArrowRight, ShieldCheck, Lock, Bot, Send, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
+import loteamentoBg from "@/assets/images/loteamento-bg.jpg";
+
 const projectsData = [
   { id: 1, name: 'Residencial Bosque das Águas', city: 'São Paulo/SP', type: 'Alto Padrão', price: 'A partir de R$ 180.000', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=2069&auto=format&fit=crop' },
   { id: 2, name: 'Jardins do Sul', city: 'Campinas/SP', type: 'Bairro Planejado', price: 'A partir de R$ 125.000', img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2064&auto=format&fit=crop' },
@@ -100,9 +102,12 @@ export default function PublicPortal() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative py-20 lg:py-32 overflow-hidden">
-          <div className="absolute inset-0 bg-slate-900 -z-20"></div>
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=2069&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay -z-10"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent -z-10"></div>
+          <div className="absolute inset-0 bg-emerald-900 -z-20"></div>
+          <div 
+            className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay -z-10"
+            style={{ backgroundImage: `url(${loteamentoBg})` }}
+          ></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-emerald-900/50 to-transparent -z-10"></div>
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <Badge variant="outline" className="border-emerald-500/50 text-emerald-400 bg-emerald-500/10 mb-6 px-4 py-1.5 backdrop-blur-sm">
