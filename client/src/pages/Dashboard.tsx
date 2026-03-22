@@ -514,6 +514,26 @@ function buildPrintableReport(params: {
               max-width: 100%;
             }
           }
+          @media (max-width: 720px) {
+            .header {
+              padding: 20px;
+            }
+            .content {
+              padding: 18px 20px 28px;
+            }
+            .grid {
+              grid-template-columns: 1fr;
+            }
+            .footer-box {
+              grid-template-columns: 1fr;
+            }
+            .print-actions {
+              padding: 0 20px 20px;
+            }
+            .brand {
+              font-size: 24px;
+            }
+          }
         </style>
       </head>
       <body>
@@ -685,11 +705,6 @@ export default function Dashboard() {
     const activeDevelopments = developments.filter((item) => item.isActive !== false);
     const activeDevelopmentIds = new Set(activeDevelopments.map((item) => item.id));
 
-    /**
-     * Regra revisada:
-     * Só entram no dashboard os pré-atendimentos vinculados a empreendimentos
-     * ativos que ainda existem no banco.
-     */
     const validInterests = interests.filter(
       (item) => item.project_id && activeDevelopmentIds.has(item.project_id),
     );
@@ -839,8 +854,8 @@ export default function Dashboard() {
     return (
       <div className="space-y-6">
         <Card className="border-slate-200 shadow-sm">
-          <CardContent className="p-10 flex items-center justify-center text-slate-500">
-            <span className="inline-flex items-center gap-2">
+          <CardContent className="p-6 sm:p-10 flex items-center justify-center text-slate-500">
+            <span className="inline-flex items-center gap-2 text-sm sm:text-base">
               <LoaderCircle className="h-4 w-4 animate-spin" />
               Carregando painel com dados do banco...
             </span>
@@ -851,168 +866,178 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6 min-w-0">
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
-        <DialogContent className="max-w-5xl">
-          <DialogHeader>
-            <DialogTitle>Prévia do Relatório Operacional</DialogTitle>
-            <DialogDescription>
-              Conteúdo montado somente com registros existentes no banco de dados.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="w-[calc(100vw-24px)] max-w-5xl max-h-[90vh] overflow-hidden p-0">
+          <div className="flex h-full max-h-[90vh] flex-col">
+            <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b">
+              <DialogTitle>Prévia do Relatório Operacional</DialogTitle>
+              <DialogDescription>
+                Conteúdo montado somente com registros existentes no banco de dados.
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-6 max-h-[75vh] overflow-auto pr-1">
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center">
-                        <Building2 className="h-6 w-6 text-emerald-700" />
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5">
+              <Card className="border-slate-200">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
+                          <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-700" />
+                        </div>
+                        <div className="min-w-0">
+                          <h2 className="text-xl sm:text-2xl font-black text-slate-900 truncate">
+                            SmartloteIA
+                          </h2>
+                          <p className="text-sm text-slate-500">Relatório Operacional</p>
+                        </div>
                       </div>
-                      <div>
-                        <h2 className="text-2xl font-black text-slate-900">SmartloteIA</h2>
-                        <p className="text-sm text-slate-500">Relatório Operacional</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm w-full lg:w-auto">
+                      <div className="rounded-xl border bg-slate-50 px-3 py-2">
+                        <strong>Período:</strong> {period}
+                      </div>
+                      <div className="rounded-xl border bg-slate-50 px-3 py-2">
+                        <strong>Emitido em:</strong> {getCurrentDateTime()}
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                    <div className="rounded-xl border bg-slate-50 px-3 py-2">
-                      <strong>Período:</strong> {period}
+                  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
+                    <p className="font-semibold">Resumo</p>
+                    <p className="mt-1 text-sm">{metrics.summary}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-slate-500">
+                      Empreendimentos Ativos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-black">{metrics.activeDevelopmentsCount}</div>
+                    <div className="text-xs text-slate-500 mt-2">Registros reais do banco</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-slate-500">Lotes Disponíveis</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-black">
+                      {metrics.availableLots} / {metrics.totalLots}
                     </div>
-                    <div className="rounded-xl border bg-slate-50 px-3 py-2">
-                      <strong>Emitido em:</strong> {getCurrentDateTime()}
+                    <div className="text-xs text-slate-500 mt-2">
+                      Reservados: {metrics.reservedLots} | Vendidos: {metrics.soldLots}
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
 
-                <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
-                  <p className="font-semibold">Resumo</p>
-                  <p className="mt-1 text-sm">{metrics.summary}</p>
-                </div>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-slate-500">Clientes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-black">{metrics.clientsCount}</div>
+                    <div className="text-xs text-slate-500 mt-2">Cadastros reais</div>
+                  </CardContent>
+                </Card>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-slate-500">Pré-atendimentos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-black">{metrics.interestsCount}</div>
+                    <div className="text-xs text-slate-500 mt-2">
+                      Convertidos: {metrics.convertedInterests}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-slate-500">Empreendimentos Ativos</CardTitle>
+                <CardHeader>
+                  <CardTitle>Observações operacionais</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xl font-black">{metrics.activeDevelopmentsCount}</div>
-                  <div className="text-xs text-slate-500 mt-2">Registros reais do banco</div>
+                  <ul className="space-y-2 text-sm text-slate-700">
+                    {metrics.notes.map((note, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-slate-500">Lotes Disponíveis</CardTitle>
+                <CardHeader>
+                  <CardTitle>Pré-atendimentos recentes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xl font-black">
-                    {metrics.availableLots} / {metrics.totalLots}
-                  </div>
-                  <div className="text-xs text-slate-500 mt-2">
-                    Reservados: {metrics.reservedLots} | Vendidos: {metrics.soldLots}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-slate-500">Clientes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xl font-black">{metrics.clientsCount}</div>
-                  <div className="text-xs text-slate-500 mt-2">Cadastros reais</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-slate-500">Pré-atendimentos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xl font-black">{metrics.interestsCount}</div>
-                  <div className="text-xs text-slate-500 mt-2">
-                    Convertidos: {metrics.convertedInterests}
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[760px] text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2">Nome</th>
+                          <th className="text-left py-2">Empreendimento</th>
+                          <th className="text-left py-2">Telefone</th>
+                          <th className="text-left py-2">Status</th>
+                          <th className="text-left py-2">Origem</th>
+                          <th className="text-left py-2">Data</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {metrics.recentInterests.length === 0 ? (
+                          <tr>
+                            <td className="py-3 text-slate-500" colSpan={6}>
+                              Nenhum pré-atendimento válido encontrado para empreendimentos ativos.
+                            </td>
+                          </tr>
+                        ) : (
+                          metrics.recentInterests.map((item) => (
+                            <tr key={item.id} className="border-b last:border-0">
+                              <td className="py-2">{item.fullName}</td>
+                              <td className="py-2">{item.projectName}</td>
+                              <td className="py-2">{item.phone}</td>
+                              <td className="py-2">{getInterestStatusLabel(item.status)}</td>
+                              <td className="py-2">{item.source}</td>
+                              <td className="py-2">{formatDateTimeBR(item.createdAt)}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Observações operacionais</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-slate-700">
-                  {metrics.notes.map((note, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
-                      <span>{note}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Pré-atendimentos recentes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2">Nome</th>
-                        <th className="text-left py-2">Empreendimento</th>
-                        <th className="text-left py-2">Telefone</th>
-                        <th className="text-left py-2">Status</th>
-                        <th className="text-left py-2">Origem</th>
-                        <th className="text-left py-2">Data</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.recentInterests.length === 0 ? (
-                        <tr>
-                          <td className="py-3 text-slate-500" colSpan={6}>
-                            Nenhum pré-atendimento válido encontrado para empreendimentos ativos.
-                          </td>
-                        </tr>
-                      ) : (
-                        metrics.recentInterests.map((item) => (
-                          <tr key={item.id} className="border-b last:border-0">
-                            <td className="py-2">{item.fullName}</td>
-                            <td className="py-2">{item.projectName}</td>
-                            <td className="py-2">{item.phone}</td>
-                            <td className="py-2">{getInterestStatusLabel(item.status)}</td>
-                            <td className="py-2">{item.source}</td>
-                            <td className="py-2">{formatDateTimeBR(item.createdAt)}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex flex-wrap gap-3 justify-end">
-              <Button variant="outline" onClick={downloadHtmlReport}>
+            <div className="border-t px-4 sm:px-6 py-4 flex flex-col sm:flex-row gap-3 sm:justify-end">
+              <Button variant="outline" onClick={downloadHtmlReport} className="w-full sm:w-auto">
                 <FileText className="h-4 w-4 mr-2" />
                 Baixar HTML
               </Button>
 
-              <Button variant="outline" onClick={openPrintablePdfPreview}>
+              <Button
+                variant="outline"
+                onClick={openPrintablePdfPreview}
+                className="w-full sm:w-auto"
+              >
                 <Eye className="h-4 w-4 mr-2" />
                 Abrir Prévia
               </Button>
 
               <Button
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700"
                 onClick={openPrintablePdfPreview}
               >
                 <Printer className="h-4 w-4 mr-2" />
@@ -1023,19 +1048,19 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Painel Operacional
           </h1>
-          <p className="text-slate-500">
+          <p className="text-sm sm:text-base text-slate-500">
             Visão consolidada apenas com dados existentes no banco de dados.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex w-full xl:w-auto flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <Select value={period} onValueChange={(value) => setPeriod(value as PeriodKey)}>
-            <SelectTrigger className="w-[170px] bg-white">
+            <SelectTrigger className="w-full sm:w-[170px] bg-white">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
@@ -1047,7 +1072,7 @@ export default function Dashboard() {
           </Select>
 
           <Button
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="w-full sm:w-auto gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
             onClick={openReportPreview}
           >
             <Download className="h-4 w-4" />
@@ -1059,11 +1084,11 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="border-slate-200 shadow-sm bg-white overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-10" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-500">
               Empreendimentos Ativos
             </CardTitle>
-            <div className="p-2 bg-blue-100 rounded-lg">
+            <div className="p-2 bg-blue-100 rounded-lg shrink-0">
               <Building2 className="h-4 w-4 text-blue-600" />
             </div>
           </CardHeader>
@@ -1079,16 +1104,16 @@ export default function Dashboard() {
 
         <Card className="border-slate-200 shadow-sm bg-white overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -z-10" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-500">
               Lotes Disponíveis
             </CardTitle>
-            <div className="p-2 bg-emerald-100 rounded-lg">
+            <div className="p-2 bg-emerald-100 rounded-lg shrink-0">
               <MapPin className="h-4 w-4 text-emerald-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-slate-800">
+            <div className="text-2xl font-black text-slate-800 break-words">
               {metrics.availableLots} / {metrics.totalLots}
             </div>
             <p className="text-xs font-medium mt-2 text-slate-500">
@@ -1099,11 +1124,11 @@ export default function Dashboard() {
 
         <Card className="border-slate-200 shadow-sm bg-white overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -z-10" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-500">
               Clientes
             </CardTitle>
-            <div className="p-2 bg-amber-100 rounded-lg">
+            <div className="p-2 bg-amber-100 rounded-lg shrink-0">
               <UserRound className="h-4 w-4 text-amber-600" />
             </div>
           </CardHeader>
@@ -1119,11 +1144,11 @@ export default function Dashboard() {
 
         <Card className="border-slate-200 shadow-sm bg-white overflow-hidden relative border-t-4 border-t-purple-500">
           <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -z-10" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
             <CardTitle className="text-sm font-semibold text-slate-500">
               Pré-atendimentos Válidos
             </CardTitle>
-            <div className="p-2 bg-purple-100 rounded-lg">
+            <div className="p-2 bg-purple-100 rounded-lg shrink-0">
               <Users className="h-4 w-4 text-purple-600" />
             </div>
           </CardHeader>
@@ -1131,11 +1156,17 @@ export default function Dashboard() {
             <div className="text-2xl font-black text-slate-800">
               {metrics.interestsCount}
             </div>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant="outline" className="bg-white text-xs border-slate-200 text-slate-600">
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <Badge
+                variant="outline"
+                className="bg-white text-xs border-slate-200 text-slate-600"
+              >
                 Convertidos: {metrics.convertedInterests}
               </Badge>
-              <Badge variant="outline" className="bg-white text-xs border-slate-200 text-slate-600">
+              <Badge
+                variant="outline"
+                className="bg-white text-xs border-slate-200 text-slate-600"
+              >
                 Em aberto: {metrics.openInterests}
               </Badge>
             </div>
@@ -1143,17 +1174,20 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="col-span-1 lg:col-span-2 border-slate-200 shadow-sm bg-white">
-          <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="text-slate-800">{metrics.chartTitle}</CardTitle>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <Card className="xl:col-span-2 border-slate-200 shadow-sm bg-white">
+          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <CardTitle className="text-slate-800 text-base sm:text-lg">
+              {metrics.chartTitle}
+            </CardTitle>
             <Badge variant="outline" className="w-fit">
               <CalendarDays className="h-3.5 w-3.5 mr-1" />
               Período: {period}
             </Badge>
           </CardHeader>
+
           <CardContent>
-            <div className="h-[320px] w-full mt-4">
+            <div className="h-[260px] sm:h-[300px] lg:h-[320px] w-full mt-2 sm:mt-4 min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 {metrics.chartType === "area" ? (
                   <AreaChart
@@ -1231,13 +1265,13 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1 border-slate-200 shadow-sm bg-white">
+        <Card className="border-slate-200 shadow-sm bg-white">
           <CardHeader className="border-b border-slate-100 pb-4">
-            <CardTitle className="text-slate-800 flex justify-between items-center">
-              Pré-atendimentos Recentes
+            <CardTitle className="text-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span>Pré-atendimentos Recentes</span>
               <Button
                 variant="link"
-                className="text-emerald-600 px-0"
+                className="text-emerald-600 px-0 h-auto self-start sm:self-auto"
                 onClick={() => setLocation("/crm")}
               >
                 Ver todos
@@ -1247,11 +1281,11 @@ export default function Dashboard() {
 
           <CardContent className="pt-6">
             {metrics.recentInterests.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
+              <div className="rounded-2xl border border-dashed border-slate-300 p-6 sm:p-10 text-center text-slate-500 text-sm">
                 Nenhum pré-atendimento válido encontrado para empreendimentos ativos.
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {metrics.recentInterests.map((item) => (
                   <div key={item.id} className="flex items-start justify-between gap-3">
                     <div className="flex flex-col gap-1 min-w-0">
@@ -1259,12 +1293,12 @@ export default function Dashboard() {
                         {item.fullName}
                       </span>
                       <span className="text-xs font-medium text-slate-500 truncate flex items-center gap-1">
-                        <Building className="h-3.5 w-3.5" />
-                        {item.projectName}
+                        <Building className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{item.projectName}</span>
                       </span>
                       <span className="text-xs text-slate-500 flex items-center gap-1">
-                        <Phone className="h-3.5 w-3.5" />
-                        {item.phone}
+                        <Phone className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{item.phone}</span>
                       </span>
                     </div>
 
