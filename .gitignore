@@ -1,6 +1,36 @@
-node_modules
-dist
+# ambiente
+.env
+.env.*
+node_modules/
+dist/
+build/
+
+# locais / editor / replit
+.config/
+.local/
+.replit
+replit.nix
+
+# logs / bancos locais
+*.log
+*.db
+*.db-shm
+*.db-wal
+*.bin
+
+# arquivos pesados / exportações / backups
+*.zip
+*.pdf
+*.xls
+*.xlsx
+*.csv
+*.html
+*_files/
+
+# arquivos temporários / lixo
+*.transferir
+client/src/App bad.js
+
+# sistema
 .DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
+Thumbs.db

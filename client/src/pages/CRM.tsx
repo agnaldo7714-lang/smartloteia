@@ -1,234 +1,965 @@
-import { useState } from "react";
-import { Plus, Search, Filter, Phone, Mail, MessageCircle, MoreHorizontal, CalendarClock, Flame, ThermometerSnowflake, Activity } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  CheckCircle2,
+  Filter,
+  Phone,
+  PlusCircle,
+  Search,
+  UserCheck,
+} from "lucide-react";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "@/hooks/use-toast";
 
-const kanbanData = {
-  leads: [
-    { id: '1', name: 'Roberto Almeida', project: 'Bosque das Águas', value: 'R$ 180k', time: '2h atrás', source: 'WhatsApp', temp: 'hot' },
-    { id: '2', name: 'Camila Barros', project: 'Jardins do Sul', value: 'R$ 125k', time: '5h atrás', source: 'Instagram', temp: 'warm' },
-    { id: '7', name: 'Felipe Santos', project: 'Valle Verde', value: 'R$ 250k', time: '1 dia', source: 'Site', temp: 'cold' },
-  ],
-  qualification: [
-    { id: '3', name: 'Thiago Martins', project: 'Bosque das Águas', value: 'R$ 210k', time: '1 dia', source: 'Indicação', temp: 'warm' },
-  ],
-  visit: [
-    { id: '4', name: 'Família Souza', project: 'Jardins do Sul', value: 'R$ 150k', time: 'Hoje 14h', source: 'WhatsApp', temp: 'hot' },
-    { id: '5', name: 'Juliana Costa', project: 'Bosque das Águas', value: 'R$ 180k', time: 'Amanhã', source: 'Facebook', temp: 'hot' },
-  ],
-  proposal: [
-    { id: '6', name: 'Empresa XYZ', project: 'Bosque - Comercial', value: 'R$ 450k', time: 'Em análise', source: 'Site', temp: 'hot' },
-  ]
+type LeadStatus =
+  | "NOVO"
+  | "CONTATO"
+  | "VISITA"
+  | "PROPOSTA"
+  | "RESERVA"
+  | "CONTRATO"
+  | "VENDIDO"
+  | "PERDIDO";
+
+type BrokerItem = {
+  id: string;
+  billingEntityId?: string;
+  billingEntityName?: string;
+  corporateName?: string;
+  tradeName?: string;
+  isActive?: boolean;
 };
 
-const TempIcon = ({ temp }: { temp: string }) => {
-  if (temp === 'hot') return <Flame className="w-4 h-4 text-orange-500 fill-orange-500/20" />;
-  if (temp === 'warm') return <Activity className="w-4 h-4 text-amber-500" />;
-  return <ThermometerSnowflake className="w-4 h-4 text-blue-500" />;
+type DevelopmentItem = {
+  id: string;
+  name: string;
 };
 
-export default function CRM() {
+type ClientItem = {
+  id: string;
+  name?: string;
+};
+
+type LeadItem = {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string | null;
+  source?: string | null;
+  notes?: string | null;
+  status: LeadStatus;
+  brokerId?: string | null;
+  developmentId?: string | null;
+  clientId?: string | null;
+  createdAt?: string;
+  broker?: BrokerItem | null;
+  development?: DevelopmentItem | null;
+  client?: ClientItem | null;
+};
+
+type CreateLeadForm = {
+  name: string;
+  phone: string;
+  email: string;
+  source: string;
+  notes: string;
+  brokerId: string;
+  developmentId: string;
+};
+
+type ActionLeadForm = {
+  status: LeadStatus;
+  brokerId: string;
+  notes: string;
+};
+
+type Filters = {
+  search: string;
+  status: string;
+  brokerId: string;
+  source: string;
+};
+
+const statusOptions: LeadStatus[] = [
+  "NOVO",
+  "CONTATO",
+  "VISITA",
+  "PROPOSTA",
+  "RESERVA",
+  "CONTRATO",
+  "VENDIDO",
+  "PERDIDO",
+];
+
+const statusLabel: Record<LeadStatus, string> = {
+  NOVO: "Novo",
+  CONTATO: "Contato",
+  VISITA: "Visita",
+  PROPOSTA: "Proposta",
+  RESERVA: "Reserva",
+  CONTRATO: "Contrato",
+  VENDIDO: "Vendido",
+  PERDIDO: "Perdido",
+};
+
+function getToken() {
   return (
-    <div className="space-y-6 h-[calc(100vh-8rem)] flex flex-col">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">CRM & Funil de Vendas</h1>
-          <p className="text-slate-500">Gestão de leads com integração simulada de WhatsApp.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 bg-white">
-            <Filter className="h-4 w-4" /> Filtros
-          </Button>
-          <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20">
-            <Plus className="h-4 w-4" /> Novo Lead
-          </Button>
-        </div>
-      </div>
+    localStorage.getItem("smartlote_token") ||
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("smartlote_token") ||
+    sessionStorage.getItem("token") ||
+    ""
+  );
+}
 
-      <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
-        <div className="flex gap-6 h-full min-w-[1200px] items-start">
-          
-          {/* Column 1: Leads */}
-          <div className="w-[320px] flex flex-col gap-3 h-full">
-            <div className="flex items-center justify-between px-2 py-1 border-b-2 border-blue-500">
-              <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                Novos Leads
-              </h3>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700 font-bold">{kanbanData.leads.length}</Badge>
+async function requestJson<T = any>(
+  url: string,
+  init?: RequestInit
+): Promise<T> {
+  const token = getToken();
+
+  const response = await fetch(url, {
+    ...init,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers || {}),
+    },
+  });
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!response.ok) {
+    throw new Error(data?.message || "Erro na requisição");
+  }
+
+  return data;
+}
+
+function buildLeadQuery(filters: Filters) {
+  const params = new URLSearchParams();
+
+  if (filters.search.trim()) params.set("search", filters.search.trim());
+  if (filters.status && filters.status !== "ALL")
+    params.set("status", filters.status);
+  if (filters.brokerId && filters.brokerId !== "ALL")
+    params.set("brokerId", filters.brokerId);
+  if (filters.source && filters.source !== "ALL")
+    params.set("source", filters.source);
+
+  const query = params.toString();
+  return query ? `/api/leads?${query}` : "/api/leads";
+}
+
+function getBrokerName(broker?: BrokerItem | null) {
+  if (!broker) return "-";
+  return (
+    broker.billingEntityName ||
+    broker.tradeName ||
+    broker.corporateName ||
+    "-"
+  );
+}
+
+function getBadgeVariant(status: LeadStatus) {
+  switch (status) {
+    case "NOVO":
+      return "secondary";
+    case "CONTATO":
+      return "outline";
+    case "VISITA":
+      return "default";
+    case "PROPOSTA":
+      return "secondary";
+    case "RESERVA":
+      return "default";
+    case "CONTRATO":
+      return "default";
+    case "VENDIDO":
+      return "default";
+    case "PERDIDO":
+      return "destructive";
+    default:
+      return "secondary";
+  }
+}
+
+export default function LeadsPage() {
+  const queryClient = useQueryClient();
+
+  const [filters, setFilters] = useState<Filters>({
+    search: "",
+    status: "ALL",
+    brokerId: "ALL",
+    source: "ALL",
+  });
+
+  const [leadModalOpen, setLeadModalOpen] = useState(false);
+  const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<LeadItem | null>(null);
+
+  const [createForm, setCreateForm] = useState<CreateLeadForm>({
+    name: "",
+    phone: "",
+    email: "",
+    source: "",
+    notes: "",
+    brokerId: "NONE",
+    developmentId: "NONE",
+  });
+
+  const [actionForm, setActionForm] = useState<ActionLeadForm>({
+    status: "CONTATO",
+    brokerId: "NONE",
+    notes: "",
+  });
+
+  const {
+    data: leads = [],
+    isLoading,
+    refetch,
+  } = useQuery<LeadItem[]>({
+    queryKey: ["/api/leads", filters],
+    queryFn: async () => requestJson<LeadItem[]>(buildLeadQuery(filters)),
+  });
+
+  const { data: brokers = [] } = useQuery<BrokerItem[]>({
+    queryKey: ["/api/brokers"],
+    queryFn: async () => requestJson<BrokerItem[]>("/api/brokers"),
+  });
+
+  const { data: developments = [] } = useQuery<DevelopmentItem[]>({
+    queryKey: ["/api/developments"],
+    queryFn: async () => {
+      try {
+        return await requestJson<DevelopmentItem[]>("/api/developments");
+      } catch {
+        return [];
+      }
+    },
+  });
+
+  const activeBrokers = useMemo(
+    () => brokers.filter((item) => item.isActive !== false),
+    [brokers]
+  );
+
+  const totalByStatus = useMemo(() => {
+    return {
+      total: leads.length,
+      novos: leads.filter((l) => l.status === "NOVO").length,
+      emAtendimento: leads.filter((l) =>
+        ["CONTATO", "VISITA", "PROPOSTA"].includes(l.status)
+      ).length,
+      reservas: leads.filter((l) => l.status === "RESERVA").length,
+      vendidos: leads.filter((l) => l.status === "VENDIDO").length,
+      perdidos: leads.filter((l) => l.status === "PERDIDO").length,
+    };
+  }, [leads]);
+
+  const createLeadMutation = useMutation({
+    mutationFn: async () => {
+      return requestJson("/api/leads", {
+        method: "POST",
+        body: JSON.stringify({
+          name: createForm.name,
+          phone: createForm.phone,
+          email: createForm.email || null,
+          source: createForm.source || null,
+          notes: createForm.notes || null,
+          brokerId:
+            createForm.brokerId && createForm.brokerId !== "NONE"
+              ? createForm.brokerId
+              : null,
+          developmentId:
+            createForm.developmentId && createForm.developmentId !== "NONE"
+              ? createForm.developmentId
+              : null,
+        }),
+      });
+    },
+    onSuccess: async () => {
+      toast({ title: "Lead criado com sucesso" });
+      setLeadModalOpen(false);
+      setCreateForm({
+        name: "",
+        phone: "",
+        email: "",
+        source: "",
+        notes: "",
+        brokerId: "NONE",
+        developmentId: "NONE",
+      });
+      await queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar lead",
+        description: error?.message || "Falha ao salvar lead",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const approveLeadMutation = useMutation({
+    mutationFn: async (leadId: string) => {
+      return requestJson(`/api/leads/${leadId}/approve`, {
+        method: "PATCH",
+        body: JSON.stringify({}),
+      });
+    },
+    onSuccess: async () => {
+      toast({ title: "Lead aprovado com sucesso" });
+      await queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao aprovar lead",
+        description: error?.message || "Falha ao aprovar lead",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateLeadMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedLead) throw new Error("Lead não selecionado");
+
+      return requestJson(`/api/leads/${selectedLead.id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: actionForm.status,
+          brokerId:
+            actionForm.brokerId && actionForm.brokerId !== "NONE"
+              ? actionForm.brokerId
+              : null,
+          notes: actionForm.notes || null,
+        }),
+      });
+    },
+    onSuccess: async () => {
+      toast({ title: "Lead atualizado com sucesso" });
+      setActionModalOpen(false);
+      setSelectedLead(null);
+      await queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar lead",
+        description: error?.message || "Falha ao atualizar lead",
+        variant: "destructive",
+      });
+    },
+  });
+
+  function handleOpenActModal(lead: LeadItem) {
+    setSelectedLead(lead);
+    setActionForm({
+      status: lead.status || "CONTATO",
+      brokerId: lead.brokerId || "NONE",
+      notes: lead.notes || "",
+    });
+    setActionModalOpen(true);
+  }
+
+  function handleCreateLead() {
+    if (!createForm.name.trim()) {
+      toast({
+        title: "Informe o nome do lead",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!createForm.phone.trim()) {
+      toast({
+        title: "Informe o telefone do lead",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createLeadMutation.mutate();
+  }
+
+  function handleApplyFilters() {
+    refetch();
+  }
+
+  function handleClearFilters() {
+    setFilters({
+      search: "",
+      status: "ALL",
+      brokerId: "ALL",
+      source: "ALL",
+    });
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-0 shadow-md">
+        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle className="text-2xl">Leads</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Cadastro, aprovação e andamento comercial dos leads
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => setLeadModalOpen(true)}
+              className="gap-2"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Novo Lead
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-5">
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold">{totalByStatus.total}</p>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Novos</p>
+                <p className="text-2xl font-bold">{totalByStatus.novos}</p>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Em atendimento</p>
+                <p className="text-2xl font-bold">{totalByStatus.emAtendimento}</p>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Reservas</p>
+                <p className="text-2xl font-bold">{totalByStatus.reservas}</p>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground">Vendidos</p>
+                <p className="text-2xl font-bold">{totalByStatus.vendidos}</p>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-md">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-4">
+            <div className="space-y-2">
+              <Label>Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  className="pl-9"
+                  placeholder="Nome, telefone ou e-mail"
+                  value={filters.search}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      search: e.target.value,
+                    }))
+                  }
+                />
+              </div>
             </div>
-            
-            <div className="flex-1 space-y-3 overflow-y-auto pr-2 pb-2">
-              {kanbanData.leads.map(lead => (
-                <Card key={lead.id} className="cursor-grab hover:border-emerald-400 hover:shadow-lg transition-all border-slate-200 shadow-sm bg-white">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-2">
-                        <TempIcon temp={lead.temp} />
-                        <Badge variant="outline" className="text-[10px] font-bold text-slate-500 bg-slate-50 uppercase tracking-wider">
-                          {lead.source}
-                        </Badge>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2 -mt-2 text-slate-400">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h4 className="font-bold text-slate-800 text-base mb-1">{lead.name}</h4>
-                    <p className="text-xs font-medium text-slate-500 mb-4">{lead.project}</p>
-                    
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-slate-400 font-medium uppercase">Interesse</span>
-                        <span className="text-sm font-bold text-emerald-600">{lead.value}</span>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-green-200 bg-green-50 text-green-600 hover:bg-green-500 hover:text-white transition-colors">
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                value={filters.status}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, status: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos</SelectItem>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {statusLabel[status]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Corretor</Label>
+              <Select
+                value={filters.brokerId}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, brokerId: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos</SelectItem>
+                  {activeBrokers.map((broker) => (
+                    <SelectItem key={broker.id} value={broker.id}>
+                      {getBrokerName(broker)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Origem</Label>
+              <Select
+                value={filters.source}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, source: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas</SelectItem>
+                  <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                  <SelectItem value="Instagram">Instagram</SelectItem>
+                  <SelectItem value="Indicação">Indicação</SelectItem>
+                  <SelectItem value="Site">Site</SelectItem>
+                  <SelectItem value="Telefone">Telefone</SelectItem>
+                  <SelectItem value="Plantão">Plantão</SelectItem>
+                  <SelectItem value="Tráfego Pago">Tráfego Pago</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Column 2: Qualificação */}
-          <div className="w-[320px] flex flex-col gap-3 h-full">
-            <div className="flex items-center justify-between px-2 py-1 border-b-2 border-purple-500">
-              <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                Em Atendimento
-              </h3>
-              <Badge variant="secondary" className="bg-purple-100 text-purple-700 font-bold">{kanbanData.qualification.length}</Badge>
-            </div>
-            
-            <div className="flex-1 space-y-3 overflow-y-auto pr-2 pb-2">
-              {kanbanData.qualification.map(lead => (
-                <Card key={lead.id} className="cursor-grab hover:border-emerald-400 hover:shadow-lg transition-all border-slate-200 shadow-sm bg-white">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-2">
-                        <TempIcon temp={lead.temp} />
-                        <Badge variant="outline" className="text-[10px] font-bold text-slate-500 bg-slate-50 uppercase tracking-wider">
-                          {lead.source}
-                        </Badge>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2 -mt-2 text-slate-400">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h4 className="font-bold text-slate-800 text-base mb-1">{lead.name}</h4>
-                    <p className="text-xs font-medium text-slate-500 mb-4">{lead.project}</p>
-                    
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-slate-400 font-medium uppercase">Últ. Contato</span>
-                        <span className="text-xs font-bold text-slate-700">{lead.time}</span>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-green-200 bg-green-50 text-green-600 hover:bg-green-500 hover:text-white transition-colors">
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors">
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleApplyFilters} className="gap-2">
+              <Filter className="h-4 w-4" />
+              Aplicar filtro
+            </Button>
 
-          {/* Column 3: Visita/Apresentação */}
-          <div className="w-[320px] flex flex-col gap-3 h-full">
-            <div className="flex items-center justify-between px-2 py-1 border-b-2 border-amber-500">
-              <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                Visita Agendada
-              </h3>
-              <Badge variant="secondary" className="bg-amber-100 text-amber-700 font-bold">{kanbanData.visit.length}</Badge>
+            <Button variant="outline" onClick={handleClearFilters}>
+              Limpar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-md">
+        <CardHeader>
+          <CardTitle>Lista de Leads</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          {isLoading ? (
+            <div className="py-10 text-center text-muted-foreground">
+              Carregando leads...
             </div>
-            
-            <div className="flex-1 space-y-3 overflow-y-auto pr-2 pb-2">
-              {kanbanData.visit.map(lead => (
-                <Card key={lead.id} className="cursor-grab hover:border-emerald-400 hover:shadow-lg transition-all border-slate-200 shadow-sm bg-white">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <Badge variant="secondary" className="text-[10px] font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 uppercase tracking-wider flex items-center gap-1.5">
-                        <CalendarClock className="w-3.5 h-3.5" /> {lead.time}
-                      </Badge>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2 -mt-2 text-slate-400">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h4 className="font-bold text-slate-800 text-base mb-1">{lead.name}</h4>
-                    <p className="text-xs font-medium text-slate-500 mb-4">{lead.project}</p>
-                    
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-slate-400 font-medium uppercase">Corretor</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Avatar className="h-5 w-5 border border-slate-200">
-                            <AvatarFallback className="bg-slate-100 text-[8px] font-bold text-slate-600">CR</AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs font-bold text-slate-700">Carlos R.</span>
+          ) : leads.length === 0 ? (
+            <div className="py-10 text-center text-muted-foreground">
+              Nenhum lead encontrado.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Lead</TableHead>
+                    <TableHead>Contato</TableHead>
+                    <TableHead>Origem</TableHead>
+                    <TableHead>Corretor</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Empreendimento</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {leads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell>
+                        <div className="font-medium">{lead.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {lead.clientId ? "Cliente vinculado" : "Ainda não convertido"}
                         </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-green-200 bg-green-50 text-green-600 hover:bg-green-500 hover:text-white transition-colors">
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          <span>{lead.phone}</span>
+                        </div>
+                        {lead.email ? (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {lead.email}
+                          </div>
+                        ) : null}
+                      </TableCell>
+
+                      <TableCell>{lead.source || "-"}</TableCell>
+
+                      <TableCell>{getBrokerName(lead.broker)}</TableCell>
+
+                      <TableCell>
+                        <Badge variant={getBadgeVariant(lead.status) as any}>
+                          {statusLabel[lead.status]}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell>{lead.development?.name || "-"}</TableCell>
+
+                      <TableCell className="text-right">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => handleOpenActModal(lead)}
+                          >
+                            <UserCheck className="h-4 w-4" />
+                            Atuar
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => approveLeadMutation.mutate(lead.id)}
+                            disabled={
+                              approveLeadMutation.isPending ||
+                              lead.status !== "NOVO"
+                            }
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            Aprovar
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={leadModalOpen} onOpenChange={setLeadModalOpen}>
+        <DialogContent className="sm:max-w-[640px]">
+          <DialogHeader>
+            <DialogTitle>Novo Lead</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Nome *</Label>
+                <Input
+                  value={createForm.name}
+                  onChange={(e) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
+                  placeholder="Nome do lead"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Telefone *</Label>
+                <Input
+                  value={createForm.phone}
+                  onChange={(e) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      phone: e.target.value,
+                    }))
+                  }
+                  placeholder="Telefone"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>E-mail</Label>
+                <Input
+                  value={createForm.email}
+                  onChange={(e) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
+                  placeholder="email@dominio.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Origem</Label>
+                <Select
+                  value={createForm.source || "NONE"}
+                  onValueChange={(value) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      source: value === "NONE" ? "" : value,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a origem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Não informar</SelectItem>
+                    <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                    <SelectItem value="Instagram">Instagram</SelectItem>
+                    <SelectItem value="Indicação">Indicação</SelectItem>
+                    <SelectItem value="Site">Site</SelectItem>
+                    <SelectItem value="Telefone">Telefone</SelectItem>
+                    <SelectItem value="Plantão">Plantão</SelectItem>
+                    <SelectItem value="Tráfego Pago">Tráfego Pago</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Corretor responsável</Label>
+                <Select
+                  value={createForm.brokerId}
+                  onValueChange={(value) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      brokerId: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar corretor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Não atribuir agora</SelectItem>
+                    {activeBrokers.map((broker) => (
+                      <SelectItem key={broker.id} value={broker.id}>
+                        {getBrokerName(broker)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Empreendimento</Label>
+                <Select
+                  value={createForm.developmentId}
+                  onValueChange={(value) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      developmentId: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar empreendimento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Não informar</SelectItem>
+                    {developments.map((dev) => (
+                      <SelectItem key={dev.id} value={dev.id}>
+                        {dev.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Observações</Label>
+              <Textarea
+                value={createForm.notes}
+                onChange={(e) =>
+                  setCreateForm((prev) => ({
+                    ...prev,
+                    notes: e.target.value,
+                  }))
+                }
+                placeholder="Observações do lead"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setLeadModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleCreateLead}
+                disabled={createLeadMutation.isPending}
+              >
+                {createLeadMutation.isPending ? "Salvando..." : "Salvar lead"}
+              </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          {/* Column 4: Proposta */}
-          <div className="w-[320px] flex flex-col gap-3 h-full">
-            <div className="flex items-center justify-between px-2 py-1 border-b-2 border-emerald-500">
-              <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                Proposta / Negociação
-              </h3>
-              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 font-bold">{kanbanData.proposal.length}</Badge>
+      <Dialog open={actionModalOpen} onOpenChange={setActionModalOpen}>
+        <DialogContent className="sm:max-w-[640px]">
+          <DialogHeader>
+            <DialogTitle>Atuar no Lead</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-2">
+            <div className="rounded-lg border p-3 bg-muted/30">
+              <div className="font-medium">{selectedLead?.name || "-"}</div>
+              <div className="text-sm text-muted-foreground">
+                {selectedLead?.phone || "-"}{" "}
+                {selectedLead?.email ? `• ${selectedLead.email}` : ""}
+              </div>
             </div>
-            
-            <div className="flex-1 space-y-3 overflow-y-auto pr-2 pb-2">
-              {kanbanData.proposal.map(lead => (
-                <Card key={lead.id} className="cursor-grab hover:border-emerald-500 hover:shadow-lg transition-all border-emerald-200 shadow-md bg-gradient-to-b from-emerald-50/50 to-white">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <Badge className="text-[10px] font-bold bg-emerald-500 uppercase tracking-wider">
-                        Gerando Contrato
-                      </Badge>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2 -mt-2 text-slate-400">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h4 className="font-bold text-slate-800 text-base mb-1">{lead.name}</h4>
-                    <p className="text-xs font-medium text-slate-500 mb-4">{lead.project}</p>
-                    
-                    <div className="flex items-center justify-between border-t border-emerald-100 pt-3">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-emerald-600/70 font-bold uppercase">VGV Potencial</span>
-                        <span className="text-sm font-black text-emerald-700">{lead.value}</span>
-                      </div>
-                      <Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-700 text-xs font-bold">
-                        Aprovar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={actionForm.status}
+                  onValueChange={(value) =>
+                    setActionForm((prev) => ({
+                      ...prev,
+                      status: value as LeadStatus,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {statusLabel[status]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Corretor</Label>
+                <Select
+                  value={actionForm.brokerId}
+                  onValueChange={(value) =>
+                    setActionForm((prev) => ({
+                      ...prev,
+                      brokerId: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar corretor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Sem corretor</SelectItem>
+                    {activeBrokers.map((broker) => (
+                      <SelectItem key={broker.id} value={broker.id}>
+                        {getBrokerName(broker)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Observações</Label>
+              <Textarea
+                value={actionForm.notes}
+                onChange={(e) =>
+                  setActionForm((prev) => ({
+                    ...prev,
+                    notes: e.target.value,
+                  }))
+                }
+                placeholder="Registrar andamento, retorno, proposta, visita..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setActionModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => updateLeadMutation.mutate()}
+                disabled={updateLeadMutation.isPending}
+              >
+                {updateLeadMutation.isPending ? "Salvando..." : "Salvar ação"}
+              </Button>
             </div>
           </div>
-
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

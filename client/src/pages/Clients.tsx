@@ -1,274 +1,993 @@
-import { useState } from "react";
-import { Plus, Search, Filter, MoreHorizontal, FileEdit, Trash2, Mail, Phone, ExternalLink } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import type { SafeUser } from "@shared/schema";
+import {
+  Building2,
+  Mail,
+  MapPin,
+  Phone,
+  PlusCircle,
+  Search,
+  Trash2,
+  UserRound,
+  Pencil,
+  BriefcaseBusiness,
+  Eraser,
+  UserCheck,
+  LoaderCircle,
+} from "lucide-react";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { apiRequest } from "@/lib/queryClient";
+import { toast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-const initialClientsData = [
-  { id: '1', name: 'João Silva', cpf: '123.456.789-00', email: 'joao@email.com', phone: '(11) 98765-4321', status: 'Ativo', date: '10/03/2026', contracts: 1 },
-  { id: '2', name: 'Maria Santos Oliveira', cpf: '234.567.890-11', email: 'maria.santos@email.com', phone: '(11) 97654-3210', status: 'Ativo', date: '08/03/2026', contracts: 2 },
-  { id: '3', name: 'Carlos Ferreira', cpf: '345.678.901-22', email: 'carlos.f@email.com', phone: '(11) 96543-2109', status: 'Inativo', date: '05/03/2026', contracts: 0 },
-  { id: '4', name: 'Ana Costa', cpf: '456.789.012-33', email: 'ana.costa@email.com', phone: '(11) 95432-1098', status: 'Ativo', date: '01/03/2026', contracts: 1 },
-];
+type ClientItem = {
+  id: string;
+  fullName: string;
+  phone?: string | null;
+  email?: string | null;
+  city?: string | null;
+  objective?: string | null;
+  budgetRange?: string | null;
+  timeline?: string | null;
+  profileNotes?: string | null;
+  source?: string | null;
+  projectId?: string | null;
+  projectName?: string | null;
+  status?: string | null;
+  brokerId?: string | null;
+  brokerName?: string | null;
+  assignedBroker?: string | null;
+  notes?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
-export default function Clients() {
-  const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [clients, setClients] = useState(initialClientsData);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newClient, setNewClient] = useState({ name: '', cpf: '', email: '', phone: '' });
+type BrokerItem = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  billingEntityName?: string | null;
+};
 
-  // Add edit state
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState<any>(null);
+type ClientFormState = {
+  fullName: string;
+  phone: string;
+  email: string;
+  city: string;
+  objective: string;
+  budgetRange: string;
+  timeline: string;
+  profileNotes: string;
+  source: string;
+  projectName: string;
+  status: "lead" | "active" | "inactive";
+  notes: string;
+};
 
-  const handleCreateClient = () => {
-    if (!newClient.name) return;
-    
-    const clientToAdd = {
-      id: `${clients.length + 1}`,
-      name: newClient.name,
-      cpf: newClient.cpf || '000.000.000-00',
-      email: newClient.email || 'email@exemplo.com',
-      phone: newClient.phone || '(00) 00000-0000',
-      status: 'Ativo',
-      date: new Date().toLocaleDateString('pt-BR'),
-      contracts: 0
-    };
-    
-    setClients([clientToAdd, ...clients]);
-    setNewClient({ name: '', cpf: '', email: '', phone: '' });
-    setIsDialogOpen(false);
-    toast({
-      title: "Cliente Cadastrado",
-      description: "O novo cliente foi adicionado com sucesso.",
+const emptyForm: ClientFormState = {
+  fullName: "",
+  phone: "",
+  email: "",
+  city: "",
+  objective: "",
+  budgetRange: "",
+  timeline: "",
+  profileNotes: "",
+  source: "manual",
+  projectName: "",
+  status: "active",
+  notes: "",
+};
+
+export default function ClientsPage() {
+  const queryClient = useQueryClient();
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const [openForm, setOpenForm] = useState(false);
+  const [editingClient, setEditingClient] = useState<ClientItem | null>(null);
+  const [form, setForm] = useState<ClientFormState>(emptyForm);
+
+  const [brokerDialogOpen, setBrokerDialogOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<ClientItem | null>(null);
+  const [selectedBrokerId, setSelectedBrokerId] = useState<string>("NONE");
+
+  const { data: currentUser, isLoading: loadingUser } = useQuery<SafeUser | null>({
+    queryKey: ["/api/auth/me"],
+    retry: false,
+  });
+
+  const { data: clients = [], isLoading } = useQuery<ClientItem[]>({
+    queryKey: ["/api/admin/clients"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/clients");
+      return await response.json();
+    },
+  });
+
+  const { data: brokers = [], isLoading: loadingBrokers } = useQuery<
+    BrokerItem[]
+  >({
+    queryKey: ["/api/admin/brokers"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/brokers");
+      return await response.json();
+    },
+  });
+
+  const canManageClients =
+    currentUser?.role === "admin" || currentUser?.role === "manager";
+
+  const createClientMutation = useMutation({
+    mutationFn: async (payload: ClientFormState) => {
+      const response = await apiRequest("POST", "/api/admin/clients", {
+        fullName: payload.fullName,
+        phone: payload.phone || null,
+        email: payload.email || null,
+        city: payload.city || null,
+        objective: payload.objective || null,
+        budgetRange: payload.budgetRange || null,
+        timeline: payload.timeline || null,
+        profileNotes: payload.profileNotes || null,
+        source: payload.source || "manual",
+        projectId: null,
+        projectName: payload.projectName || null,
+        status: payload.status,
+        notes: payload.notes || null,
+      });
+      return await response.json();
+    },
+    onSuccess: async () => {
+      toast({ title: "Cliente cadastrado com sucesso" });
+      setOpenForm(false);
+      setEditingClient(null);
+      setForm(emptyForm);
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/clients"] });
+    },
+    onError: async (error: any) => {
+      let message = error?.message || "Não foi possível cadastrar o cliente.";
+
+      try {
+        if (error?.response?.json) {
+          const data = await error.response.json();
+          message = data?.message || message;
+        }
+      } catch {}
+
+      toast({
+        title: "Erro ao cadastrar cliente",
+        description: message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateClientMutation = useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: ClientFormState;
+    }) => {
+      const response = await apiRequest("PUT", `/api/admin/clients/${id}`, {
+        fullName: payload.fullName,
+        phone: payload.phone || null,
+        email: payload.email || null,
+        city: payload.city || null,
+        objective: payload.objective || null,
+        budgetRange: payload.budgetRange || null,
+        timeline: payload.timeline || null,
+        profileNotes: payload.profileNotes || null,
+        source: payload.source || "manual",
+        projectId: null,
+        projectName: payload.projectName || null,
+        status: payload.status,
+        notes: payload.notes || null,
+      });
+      return await response.json();
+    },
+    onSuccess: async () => {
+      toast({ title: "Cliente atualizado com sucesso" });
+      setOpenForm(false);
+      setEditingClient(null);
+      setForm(emptyForm);
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/clients"] });
+    },
+    onError: async (error: any) => {
+      let message = error?.message || "Não foi possível atualizar o cliente.";
+
+      try {
+        if (error?.response?.json) {
+          const data = await error.response.json();
+          message = data?.message || message;
+        }
+      } catch {}
+
+      toast({
+        title: "Erro ao atualizar cliente",
+        description: message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteClientMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/admin/clients/${id}`);
+      return await response.json();
+    },
+    onSuccess: async (data: any) => {
+      toast({
+        title: "Operação concluída",
+        description:
+          data?.message || "O cliente foi removido ou inativado com sucesso.",
+      });
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/clients"] });
+    },
+    onError: async (error: any) => {
+      let message = error?.message || "Não foi possível excluir o cliente.";
+
+      try {
+        if (error?.response?.json) {
+          const data = await error.response.json();
+          message = data?.message || message;
+        }
+      } catch {}
+
+      toast({
+        title: "Erro ao excluir cliente",
+        description: message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const purgeInactiveMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", "/api/admin/clients/purge/inactive");
+      return await response.json();
+    },
+    onSuccess: async (data: any) => {
+      toast({
+        title: "Limpeza concluída",
+        description: `${data?.deletedCount ?? 0} cliente(s) inativo(s) removido(s).`,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/clients"] });
+    },
+    onError: async (error: any) => {
+      let message = error?.message || "Não foi possível limpar os inativos.";
+
+      try {
+        if (error?.response?.json) {
+          const data = await error.response.json();
+          message = data?.message || message;
+        }
+      } catch {}
+
+      toast({
+        title: "Erro ao limpar inativos",
+        description: message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const assignBrokerMutation = useMutation({
+    mutationFn: async ({
+      clientId,
+      brokerId,
+    }: {
+      clientId: string;
+      brokerId: string | null;
+    }) => {
+      const response = await apiRequest(
+        "PATCH",
+        `/api/admin/clients/${clientId}/assign-broker`,
+        { brokerId },
+      );
+      return await response.json();
+    },
+    onSuccess: async (data: any) => {
+      toast({
+        title: "Corretor atualizado",
+        description: data?.message || "Vínculo atualizado com sucesso.",
+      });
+      setBrokerDialogOpen(false);
+      setSelectedClient(null);
+      setSelectedBrokerId("NONE");
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/clients"] });
+    },
+    onError: async (error: any) => {
+      let message =
+        error?.message || "Não foi possível atualizar o corretor do cliente.";
+
+      try {
+        if (error?.response?.json) {
+          const data = await error.response.json();
+          message = data?.message || message;
+        }
+      } catch {}
+
+      toast({
+        title: "Erro ao atualizar corretor",
+        description: message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const filteredClients = useMemo(() => {
+    const term = search.trim().toLowerCase();
+
+    let base = clients;
+
+    if (statusFilter !== "all") {
+      base = base.filter((item) => (item.status || "").toLowerCase() === statusFilter);
+    }
+
+    if (!term) return base;
+
+    return base.filter((item) => {
+      const text = [
+        item.fullName,
+        item.phone,
+        item.email,
+        item.city,
+        item.objective,
+        item.budgetRange,
+        item.timeline,
+        item.profileNotes,
+        item.source,
+        item.projectName,
+        item.status,
+        item.brokerName,
+        item.assignedBroker,
+        item.notes,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return text.includes(term);
     });
-  };
+  }, [clients, search, statusFilter]);
 
-  const openEditDialog = (client: any) => {
-    setEditingClient({...client});
-    setIsEditDialogOpen(true);
-  };
+  const activeBrokers = useMemo(() => {
+    return brokers.filter((item) => item.isActive);
+  }, [brokers]);
 
-  const handleEditClient = () => {
-    if (!editingClient || !editingClient.name) return;
-    
-    setClients(clients.map(c => c.id === editingClient.id ? editingClient : c));
-    setIsEditDialogOpen(false);
-    toast({
-      title: "Ficha Atualizada",
-      description: "Os dados do cliente foram atualizados com sucesso.",
+  function openCreateModal() {
+    setEditingClient(null);
+    setForm(emptyForm);
+    setOpenForm(true);
+  }
+
+  function openEditModal(item: ClientItem) {
+    setEditingClient(item);
+    setForm({
+      fullName: item.fullName || "",
+      phone: item.phone || "",
+      email: item.email || "",
+      city: item.city || "",
+      objective: item.objective || "",
+      budgetRange: item.budgetRange || "",
+      timeline: item.timeline || "",
+      profileNotes: item.profileNotes || "",
+      source: item.source || "manual",
+      projectName: item.projectName || "",
+      status:
+        item.status === "lead" || item.status === "inactive"
+          ? item.status
+          : "active",
+      notes: item.notes || "",
     });
-  };
+    setOpenForm(true);
+  }
 
-  const handleArchive = (id: string) => {
-    setClients(clients.filter(c => c.id !== id));
-    toast({
-      title: "Cliente Arquivado",
-      description: "O cliente foi removido da lista principal.",
+  function openBrokerModal(item: ClientItem) {
+    setSelectedClient(item);
+    setSelectedBrokerId(item.brokerId || "NONE");
+    setBrokerDialogOpen(true);
+  }
+
+  function handleSave() {
+    if (!form.fullName.trim()) {
+      toast({
+        title: "Informe o nome do cliente",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (editingClient) {
+      updateClientMutation.mutate({
+        id: editingClient.id,
+        payload: form,
+      });
+      return;
+    }
+
+    createClientMutation.mutate(form);
+  }
+
+  function handleDelete(item: ClientItem) {
+    const ok = window.confirm(
+      `Deseja realmente excluir/inativar o cliente "${item.fullName}"?`,
+    );
+
+    if (!ok) return;
+    deleteClientMutation.mutate(item.id);
+  }
+
+  function handlePurgeInactive() {
+    const ok = window.confirm(
+      "Deseja remover todos os clientes inativos sem histórico de vendas?",
+    );
+
+    if (!ok) return;
+    purgeInactiveMutation.mutate();
+  }
+
+  function handleSaveBroker() {
+    if (!selectedClient) return;
+
+    assignBrokerMutation.mutate({
+      clientId: selectedClient.id,
+      brokerId: selectedBrokerId === "NONE" ? null : selectedBrokerId,
     });
-  };
+  }
+
+  const total = clients.length;
+  const activeCount = clients.filter((item) => item.status === "active").length;
+  const leadCount = clients.filter((item) => item.status === "lead").length;
+  const inactiveCount = clients.filter((item) => item.status === "inactive").length;
+
+  if (loadingUser) {
+    return (
+      <div className="py-12 text-center text-muted-foreground">
+        <span className="inline-flex items-center gap-2">
+          <LoaderCircle className="h-4 w-4 animate-spin" />
+          Carregando perfil...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Carteira de Clientes</h1>
-          <p className="text-slate-500">Gestão centralizada de compradores e prospects.</p>
-        </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="shrink-0 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
-                <Plus className="h-4 w-4" /> Novo Cadastro
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Novo Cliente</DialogTitle>
-                <DialogDescription>
-                  Cadastre um novo lead ou cliente na base.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label>Nome Completo</Label>
-                  <Input placeholder="Ex: João da Silva" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <Label>CPF</Label>
-                  <Input placeholder="000.000.000-00" value={newClient.cpf} onChange={e => setNewClient({...newClient, cpf: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <Label>E-mail</Label>
-                  <Input placeholder="email@exemplo.com" value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Telefone / WhatsApp</Label>
-                  <Input placeholder="(11) 99999-9999" value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})} />
-                </div>
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleCreateClient}>Salvar Cliente</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="border-0 shadow-md">
+          <CardHeader className="pb-2">
+            <CardDescription>Total de clientes</CardDescription>
+            <CardTitle className="text-3xl">{total}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <UserRound className="h-4 w-4" />
+              Cadastro geral
+            </div>
+          </CardContent>
+        </Card>
 
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Editar Cliente</DialogTitle>
-                <DialogDescription>
-                  Atualize os dados do cliente na base.
-                </DialogDescription>
-              </DialogHeader>
-              {editingClient && (
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Nome Completo</Label>
-                    <Input value={editingClient.name} onChange={e => setEditingClient({...editingClient, name: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>CPF</Label>
-                    <Input value={editingClient.cpf} onChange={e => setEditingClient({...editingClient, cpf: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>E-mail</Label>
-                    <Input value={editingClient.email} onChange={e => setEditingClient({...editingClient, email: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Telefone / WhatsApp</Label>
-                    <Input value={editingClient.phone} onChange={e => setEditingClient({...editingClient, phone: e.target.value})} />
-                  </div>
-                </div>
-              )}
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleEditClient}>Atualizar Cliente</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Card className="border-0 shadow-md">
+          <CardHeader className="pb-2">
+            <CardDescription>Ativos</CardDescription>
+            <CardTitle className="text-3xl">{activeCount}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <UserCheck className="h-4 w-4" />
+              Em negociação/operação
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card className="shadow-sm border-slate-200 bg-white">
-        <CardHeader className="p-4 border-b border-slate-100 pb-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Card className="border-0 shadow-md">
+          <CardHeader className="pb-2">
+            <CardDescription>Leads</CardDescription>
+            <CardTitle className="text-3xl">{leadCount}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <BriefcaseBusiness className="h-4 w-4" />
+              Em prospecção
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-md">
+          <CardHeader className="pb-2">
+            <CardDescription>Inativos</CardDescription>
+            <CardTitle className="text-3xl">{inactiveCount}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Building2 className="h-4 w-4" />
+              Fora da operação
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-0 shadow-md">
+        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle>Clientes</CardTitle>
+            <CardDescription>
+              Admin e gestor podem cadastrar, editar, excluir/inativar e atribuir corretor.
+              Corretor vê os dados comerciais vinculados.
+            </CardDescription>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <div className="relative min-w-[280px]">
+              <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome, CPF ou email..."
-                className="pl-9 bg-slate-50 border-slate-200"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+                placeholder="Buscar por nome, telefone, e-mail, empreendimento, corretor..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Button variant="outline" className="gap-2 bg-white text-slate-700">
-              <Filter className="h-4 w-4" /> Filtros
-            </Button>
+
+            <div className="min-w-[180px]">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="active">Ativos</SelectItem>
+                  <SelectItem value="lead">Leads</SelectItem>
+                  <SelectItem value="inactive">Inativos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {canManageClients ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handlePurgeInactive}
+                  className="gap-2"
+                  disabled={purgeInactiveMutation.isPending}
+                >
+                  <Eraser className="h-4 w-4" />
+                  Limpar inativos
+                </Button>
+
+                <Button onClick={openCreateModal} className="gap-2">
+                  <PlusCircle className="h-4 w-4" />
+                  Novo cliente
+                </Button>
+              </>
+            ) : null}
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-50/80">
-              <TableRow className="border-slate-200">
-                <TableHead className="font-bold text-slate-600">Cliente</TableHead>
-                <TableHead className="font-bold text-slate-600">Documento</TableHead>
-                <TableHead className="hidden md:table-cell font-bold text-slate-600">Contato</TableHead>
-                <TableHead className="font-bold text-slate-600 text-center">Contratos</TableHead>
-                <TableHead className="font-bold text-slate-600">Status</TableHead>
-                <TableHead className="text-right font-bold text-slate-600">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {clients.map((client) => (
-                <TableRow key={client.id} className="hover:bg-slate-50 transition-colors group">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9 border border-slate-200">
-                        <AvatarFallback className="bg-slate-100 text-slate-600 font-bold text-xs">
-                          {client.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-800">{client.name}</span>
-                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Cad: {client.date}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium text-slate-600">{client.cpf}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
-                        <Phone className="w-3.5 h-3.5 text-slate-400" /> {client.phone}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <Mail className="w-3 h-3 text-slate-400" /> {client.email}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="secondary" className="bg-slate-100 text-slate-700 font-bold border-0">
-                      {client.contracts}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={`font-bold border-0 ${
-                      client.status === 'Ativo' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      {client.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0 text-slate-500">
-                            <span className="sr-only">Abrir menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem className="font-medium text-slate-700 cursor-pointer" onClick={() => openEditDialog(client)}>
-                            <FileEdit className="mr-2 h-4 w-4 text-slate-400" /> Editar Ficha
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="font-medium text-slate-700">
-                            <Phone className="mr-2 h-4 w-4 text-slate-400" /> Ver Histórico
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600 focus:bg-red-50 focus:text-red-700 font-medium cursor-pointer" onClick={() => handleArchive(client.id)}>
-                            <Trash2 className="mr-2 h-4 w-4 text-red-500" /> Arquivar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+
+        <CardContent>
+          {isLoading ? (
+            <div className="py-10 text-center text-muted-foreground">
+              Carregando clientes...
+            </div>
+          ) : filteredClients.length === 0 ? (
+            <div className="py-10 text-center text-muted-foreground">
+              Nenhum cliente encontrado.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Contato</TableHead>
+                    <TableHead>Local / Origem</TableHead>
+                    <TableHead>Empreendimento</TableHead>
+                    <TableHead>Corretor</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {filteredClients.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="font-medium">{item.fullName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {item.objective || item.profileNotes || "Sem detalhes"}
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span>{item.phone || "-"}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span>{item.email || "-"}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <span>{item.city || "-"}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Origem: {item.source || "-"}
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>{item.projectName || "-"}</TableCell>
+
+                      <TableCell>
+                        {item.brokerName ? (
+                          <Badge>{item.brokerName}</Badge>
+                        ) : (
+                          <Badge variant="secondary">Sem corretor</Badge>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge variant="outline">{item.status || "active"}</Badge>
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {canManageClients ? (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                                onClick={() => openBrokerModal(item)}
+                              >
+                                <BriefcaseBusiness className="h-4 w-4" />
+                                Corretor
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                                onClick={() => openEditModal(item)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                                Editar
+                              </Button>
+
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="gap-2"
+                                onClick={() => handleDelete(item)}
+                                disabled={deleteClientMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Excluir
+                              </Button>
+                            </>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              Visualização
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <Dialog open={openForm} onOpenChange={setOpenForm}>
+        <DialogContent className="sm:max-w-[820px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingClient ? "Editar cliente" : "Novo cliente"}
+            </DialogTitle>
+            <DialogDescription>
+              Admin e gestor podem manter o cadastro completo do cliente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
+                <Label>Nome *</Label>
+                <Input
+                  value={form.fullName}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, fullName: e.target.value }))
+                  }
+                  placeholder="Informe o nome do cliente"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <Input
+                  value={form.phone}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, phone: e.target.value }))
+                  }
+                  placeholder="Informe o telefone"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>E-mail</Label>
+                <Input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, email: e.target.value }))
+                  }
+                  placeholder="Informe o e-mail"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Cidade</Label>
+                <Input
+                  value={form.city}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, city: e.target.value }))
+                  }
+                  placeholder="Informe a cidade"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={form.status}
+                  onValueChange={(value: "lead" | "active" | "inactive") =>
+                    setForm((prev) => ({ ...prev, status: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lead">Lead</SelectItem>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="inactive">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Origem</Label>
+                <Input
+                  value={form.source}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, source: e.target.value }))
+                  }
+                  placeholder="landing_ai, manual, indicação..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Empreendimento</Label>
+                <Input
+                  value={form.projectName}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, projectName: e.target.value }))
+                  }
+                  placeholder="Empreendimento de interesse"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Objetivo</Label>
+                <Input
+                  value={form.objective}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, objective: e.target.value }))
+                  }
+                  placeholder="Ex.: compra para moradia"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Faixa de orçamento</Label>
+                <Input
+                  value={form.budgetRange}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, budgetRange: e.target.value }))
+                  }
+                  placeholder="Ex.: até 180 mil"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Prazo</Label>
+                <Input
+                  value={form.timeline}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, timeline: e.target.value }))
+                  }
+                  placeholder="Ex.: 30 dias"
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label>Perfil / observações comerciais</Label>
+                <Textarea
+                  value={form.profileNotes}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      profileNotes: e.target.value,
+                    }))
+                  }
+                  placeholder="Perfil familiar, necessidade, contexto comercial..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label>Observações internas</Label>
+                <Textarea
+                  value={form.notes}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, notes: e.target.value }))
+                  }
+                  placeholder="Anotações internas do time"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setOpenForm(false);
+                  setEditingClient(null);
+                  setForm(emptyForm);
+                }}
+              >
+                Cancelar
+              </Button>
+
+              <Button
+                onClick={handleSave}
+                disabled={
+                  createClientMutation.isPending || updateClientMutation.isPending
+                }
+              >
+                {createClientMutation.isPending || updateClientMutation.isPending
+                  ? "Salvando..."
+                  : "Salvar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={brokerDialogOpen} onOpenChange={setBrokerDialogOpen}>
+        <DialogContent className="sm:max-w-[620px]">
+          <DialogHeader>
+            <DialogTitle>Atribuir corretor</DialogTitle>
+            <DialogDescription>
+              Vincule ou remova o corretor responsável por este cliente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-2">
+            <div className="rounded-md border p-3 text-sm">
+              <div>
+                <strong>Cliente:</strong> {selectedClient?.fullName || "-"}
+              </div>
+              <div className="mt-1 text-muted-foreground">
+                Empreendimento: {selectedClient?.projectName || "-"}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Corretor</Label>
+              <Select
+                value={selectedBrokerId}
+                onValueChange={setSelectedBrokerId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um corretor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">Sem corretor</SelectItem>
+                  {loadingBrokers ? null : activeBrokers.length === 0 ? (
+                    <SelectItem value="EMPTY_DISABLED" disabled>
+                      Nenhum corretor ativo disponível
+                    </SelectItem>
+                  ) : (
+                    activeBrokers.map((broker) => (
+                      <SelectItem key={broker.id} value={broker.id}>
+                        {broker.name}
+                        {broker.billingEntityName
+                          ? ` • ${broker.billingEntityName}`
+                          : ""}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setBrokerDialogOpen(false);
+                  setSelectedClient(null);
+                  setSelectedBrokerId("NONE");
+                }}
+              >
+                Cancelar
+              </Button>
+
+              <Button
+                onClick={handleSaveBroker}
+                disabled={assignBrokerMutation.isPending}
+                className="gap-2"
+              >
+                <BriefcaseBusiness className="h-4 w-4" />
+                {assignBrokerMutation.isPending ? "Salvando..." : "Confirmar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
