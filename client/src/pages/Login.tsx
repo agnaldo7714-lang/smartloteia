@@ -128,6 +128,11 @@ function getHomePathByRole(role: UserRole) {
   }
 }
 
+function getProjectImage(project?: ProjectItem | null) {
+  if (project?.img?.trim()) return project.img;
+  return "/fundo-smartlote.png";
+}
+
 export default function PublicPortal() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -386,18 +391,18 @@ export default function PublicPortal() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-emerald-200">
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-4xl overflow-hidden p-0">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-4xl max-h-[92vh] overflow-y-auto p-0">
           {selectedProject && (
             <div className="bg-white">
-              <div className="relative h-64 md:h-80">
+              <div className="relative h-56 sm:h-64 md:h-80">
                 <img
-                  src={selectedProject.img}
+                  src={getProjectImage(selectedProject)}
                   alt={selectedProject.name}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/35 to-transparent"></div>
 
-                <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                <div className="absolute top-4 left-4 flex flex-wrap gap-2 pr-4">
                   <Badge className="bg-white/90 text-slate-900 hover:bg-white border-0">
                     {selectedProject.type}
                   </Badge>
@@ -408,30 +413,30 @@ export default function PublicPortal() {
 
                 <div className="absolute bottom-5 left-5 right-5 text-white">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl md:text-3xl text-white font-black">
+                    <DialogTitle className="text-xl sm:text-2xl md:text-3xl text-white font-black break-words">
                       {selectedProject.name}
                     </DialogTitle>
                     <DialogDescription className="text-slate-200 flex items-center gap-2 pt-1">
-                      <MapPin className="h-4 w-4" />
+                      <MapPin className="h-4 w-4 shrink-0" />
                       {selectedProject.city}
                     </DialogDescription>
                   </DialogHeader>
                 </div>
               </div>
 
-              <div className="p-6 md:p-8 space-y-6">
+              <div className="p-4 sm:p-6 md:p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card className="border-slate-200 shadow-none">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
                           <Landmark className="h-5 w-5 text-emerald-700" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                             Condição comercial
                           </p>
-                          <p className="text-sm font-bold text-slate-800">
+                          <p className="text-sm font-bold text-slate-800 break-words">
                             {selectedProject.price}
                           </p>
                         </div>
@@ -442,14 +447,14 @@ export default function PublicPortal() {
                   <Card className="border-slate-200 shadow-none">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
                           <Home className="h-5 w-5 text-blue-700" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                             Dimensão
                           </p>
-                          <p className="text-sm font-bold text-slate-800">
+                          <p className="text-sm font-bold text-slate-800 break-words">
                             {selectedProject.area}
                           </p>
                         </div>
@@ -460,14 +465,14 @@ export default function PublicPortal() {
                   <Card className="border-slate-200 shadow-none">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
                           <BadgeCheck className="h-5 w-5 text-amber-700" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                             Financiamento
                           </p>
-                          <p className="text-sm font-bold text-slate-800">
+                          <p className="text-sm font-bold text-slate-800 break-words">
                             {selectedProject.financing}
                           </p>
                         </div>
@@ -516,29 +521,31 @@ export default function PublicPortal() {
                         <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                           Empreendimento selecionado
                         </p>
-                        <p className="text-lg font-black text-slate-900 mt-1">
+                        <p className="text-lg font-black text-slate-900 mt-1 break-words">
                           {selectedProject.name}
                         </p>
-                        <p className="text-sm text-emerald-700 font-semibold mt-1">
+                        <p className="text-sm text-emerald-700 font-semibold mt-1 break-words">
                           {selectedProject.price}
                         </p>
                       </div>
 
-                      <Button
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => startCommercialInterview(selectedProject)}
-                      >
-                        <MessageSquareMore className="h-4 w-4 mr-2" />
-                        Solicitar atendimento comercial
-                      </Button>
+                      <div className="flex flex-col gap-3">
+                        <Button
+                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                          onClick={() => startCommercialInterview(selectedProject)}
+                        >
+                          <MessageSquareMore className="h-4 w-4 mr-2" />
+                          Solicitar atendimento comercial
+                        </Button>
 
-                      <Button
-                        variant="outline"
-                        className="w-full border-slate-300"
-                        onClick={() => setDetailsOpen(false)}
-                      >
-                        Fechar detalhes
-                      </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full border-slate-300"
+                          onClick={() => setDetailsOpen(false)}
+                        >
+                          Fechar detalhes
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -549,30 +556,30 @@ export default function PublicPortal() {
       </Dialog>
 
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:h-20 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
               <Building2 className="w-6 h-6 text-white" />
             </div>
-            <span className="font-bold text-2xl tracking-tight text-slate-900">
+            <span className="font-bold text-xl sm:text-2xl tracking-tight text-slate-900 truncate">
               SmartloteIA
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <Dialog>
               <DialogTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="text-slate-500 hover:text-slate-700 gap-2 opacity-70 hover:opacity-100 transition-opacity"
+                  className="text-slate-500 hover:text-slate-700 gap-2 opacity-70 hover:opacity-100 transition-opacity w-full sm:w-auto"
                 >
                   <Lock className="w-4 h-4" />
-                  <span className="hidden sm:inline">Acesso Restrito</span>
+                  <span>Acesso Restrito</span>
                 </Button>
               </DialogTrigger>
 
-              <DialogContent className="sm:max-w-md p-0 overflow-hidden border-0 shadow-2xl">
-                <div className="p-8 bg-slate-900 text-white relative">
+              <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-md p-0 overflow-hidden border-0 shadow-2xl">
+                <div className="p-6 sm:p-8 bg-slate-900 text-white relative">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-bl-full blur-2xl"></div>
 
                   <DialogHeader>
@@ -637,7 +644,7 @@ export default function PublicPortal() {
             </Dialog>
 
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md rounded-full px-6"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md rounded-full px-6 w-full sm:w-auto"
               onClick={scrollToAiPanel}
             >
               Fale com um Corretor
@@ -647,7 +654,7 @@ export default function PublicPortal() {
       </header>
 
       <main className="flex-1">
-        <section className="relative isolate py-20 lg:py-32 overflow-hidden">
+        <section className="relative isolate py-16 sm:py-20 lg:py-32 overflow-hidden">
           <img
             src="/fundo-smartlote.png"
             alt="Fundo SmartloteIA"
@@ -666,14 +673,14 @@ export default function PublicPortal() {
               O futuro do seu patrimônio começa aqui
             </Badge>
 
-            <h1 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-black text-white mb-6 tracking-tight leading-tight">
               Construa sua história no <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-100">
                 lugar perfeito.
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-slate-200 max-w-2xl mx-auto mb-10">
+            <p className="text-base sm:text-lg md:text-xl text-slate-200 max-w-2xl mx-auto mb-10">
               Conheça nossos loteamentos exclusivos e descubra o endereço ideal
               para construir a casa dos seus sonhos ou investir com alta
               rentabilidade.
@@ -681,21 +688,21 @@ export default function PublicPortal() {
           </div>
         </section>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
-          <div className="lg:col-span-8 space-y-8">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-              <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-16 relative z-10 grid grid-cols-1 xl:grid-cols-12 gap-8 pb-20">
+          <div className="xl:col-span-8 space-y-8 min-w-0">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
                 <MapPin className="text-emerald-500" />
                 Loteamentos Disponíveis
               </h2>
 
-              <div className="relative">
+              <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   placeholder="Buscar cidade, nome ou tipo..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 bg-slate-50 border-slate-200 rounded-full w-full sm:w-64"
+                  className="pl-9 bg-slate-50 border-slate-200 rounded-full w-full"
                 />
               </div>
             </div>
@@ -732,7 +739,7 @@ export default function PublicPortal() {
                   >
                     <div className="h-48 w-full overflow-hidden relative">
                       <img
-                        src={project.img}
+                        src={getProjectImage(project)}
                         alt={project.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
@@ -742,22 +749,22 @@ export default function PublicPortal() {
                         {project.type}
                       </Badge>
 
-                      <div className="absolute bottom-3 left-3 text-white">
-                        <h3 className="font-bold text-lg leading-tight">
+                      <div className="absolute bottom-3 left-3 right-3 text-white">
+                        <h3 className="font-bold text-lg leading-tight break-words">
                           {project.name}
                         </h3>
                         <p className="text-xs font-medium text-slate-300 flex items-center gap-1 mt-1">
-                          <MapPin className="w-3 h-3" /> {project.city}
+                          <MapPin className="w-3 h-3 shrink-0" /> {project.city}
                         </p>
                       </div>
                     </div>
 
                     <CardContent className="p-5 flex items-center justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                           Condições
                         </p>
-                        <p className="font-black text-emerald-600">
+                        <p className="font-black text-emerald-600 break-words">
                           {project.price}
                         </p>
                       </div>
@@ -765,7 +772,7 @@ export default function PublicPortal() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="rounded-full border-slate-300 text-slate-700 group-hover:bg-emerald-50 group-hover:text-emerald-700 group-hover:border-emerald-200 transition-colors"
+                        className="rounded-full border-slate-300 text-slate-700 group-hover:bg-emerald-50 group-hover:text-emerald-700 group-hover:border-emerald-200 transition-colors shrink-0"
                         onClick={() => handleOpenDetails(project)}
                       >
                         Detalhes
@@ -779,7 +786,7 @@ export default function PublicPortal() {
             <Card className="bg-amber-50 border-amber-200 shadow-sm mt-8 relative overflow-hidden">
               <div className="absolute right-0 top-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl"></div>
 
-              <CardContent className="p-8">
+              <CardContent className="p-6 sm:p-8">
                 <div className="flex flex-col md:flex-row gap-6 items-start">
                   <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center shrink-0">
                     <ShieldAlert className="w-8 h-8 text-amber-600" />
@@ -824,23 +831,23 @@ export default function PublicPortal() {
             </Card>
           </div>
 
-          <div className="lg:col-span-4">
+          <div className="xl:col-span-4 min-w-0">
             <Card
               id="smartia-interview"
-              className="border-emerald-200 shadow-xl bg-white h-full flex flex-col relative overflow-hidden sticky top-28"
+              className="border-emerald-200 shadow-xl bg-white h-full flex flex-col relative overflow-hidden xl:sticky xl:top-28"
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
 
               <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4 pt-6">
                 <div className="flex items-center gap-3">
-                  <div className="relative">
+                  <div className="relative shrink-0">
                     <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
                       <Bot className="w-6 h-6" />
                     </div>
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
                   </div>
 
-                  <div>
+                  <div className="min-w-0">
                     <CardTitle className="text-lg text-slate-800">
                       SmartIA
                     </CardTitle>
@@ -853,14 +860,14 @@ export default function PublicPortal() {
                 {interviewProject && (
                   <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
                     <div className="flex items-start gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-white border border-emerald-200 flex items-center justify-center">
+                      <div className="h-9 w-9 rounded-xl bg-white border border-emerald-200 flex items-center justify-center shrink-0">
                         <UserRound className="h-4 w-4 text-emerald-700" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
                           Entrevista ativa
                         </p>
-                        <p className="text-sm font-bold text-slate-900">
+                        <p className="text-sm font-bold text-slate-900 break-words">
                           {interviewProject.name}
                         </p>
                       </div>
@@ -869,7 +876,7 @@ export default function PublicPortal() {
                 )}
               </CardHeader>
 
-              <CardContent className="p-0 flex-1 flex flex-col h-[540px]">
+              <CardContent className="p-0 flex-1 flex flex-col h-[460px] sm:h-[520px] xl:h-[540px]">
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
                   {aiChat.map((msg, i) => (
                     <div
@@ -877,7 +884,7 @@ export default function PublicPortal() {
                       className={`flex ${msg.role === "ai" ? "justify-start" : "justify-end"}`}
                     >
                       <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${
+                        className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm ${
                           msg.role === "ai"
                             ? "bg-white border border-slate-200 text-slate-700 shadow-sm rounded-tl-none"
                             : "bg-emerald-600 text-white rounded-tr-none shadow-md"
