@@ -116,7 +116,6 @@ type PublicInterest = {
   createdAt?: string;
 };
 
-
 type SystemUser = {
   id: string;
   name: string;
@@ -169,7 +168,6 @@ const initialDevelopmentForm = {
   overviewImageUrl: "",
 };
 
-
 const initialUserForm = {
   id: "",
   name: "",
@@ -207,6 +205,18 @@ function getDevelopmentCardImage(development: Development) {
     development.img ||
     "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2064&auto=format&fit=crop"
   );
+}
+
+function getInterestStatusLabel(status: string) {
+  if (status === "converted_client") return "Convertido";
+  if (status === "new") return "Novo";
+  return status || "Sem status";
+}
+
+function getInterestStatusClass(status: string) {
+  if (status === "converted_client") return "bg-emerald-100 text-emerald-700";
+  if (status === "new") return "bg-blue-100 text-blue-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 export default function Settings() {
@@ -251,7 +261,6 @@ export default function Settings() {
     queryKey: ["/api/public/interests"],
     retry: false,
   });
-
 
   function resetUserForm() {
     setUserForm(initialUserForm);
@@ -746,27 +755,27 @@ export default function Settings() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+    <div className="space-y-5 sm:space-y-6 min-w-0">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Configurações Estruturais
           </h1>
-          <p className="text-slate-500">
+          <p className="text-sm sm:text-base text-slate-500">
             Cadastre entidades cobradoras, empreendimentos e acompanhe os pré-atendimentos da IA.
           </p>
         </div>
 
-        <Card className="w-full lg:w-auto">
+        <Card className="w-full xl:w-auto">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-11 w-11 rounded-2xl bg-slate-100 flex items-center justify-center">
+            <div className="h-11 w-11 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0">
               <DatabaseZap className="h-5 w-5 text-slate-700" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
                 Banco de dados
               </p>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex flex-wrap items-center gap-2 mt-1">
                 <Badge
                   className={
                     dbStatus?.connected
@@ -776,7 +785,7 @@ export default function Settings() {
                 >
                   {dbStatus?.connected ? "Conectado" : "Fallback / memória"}
                 </Badge>
-                <span className="text-xs text-slate-500">{dbStatus?.message}</span>
+                <span className="text-xs text-slate-500 break-words">{dbStatus?.message}</span>
               </div>
             </div>
           </CardContent>
@@ -785,31 +794,31 @@ export default function Settings() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-slate-100 p-1 w-full justify-start overflow-x-auto">
-          <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-white">
+          <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-white whitespace-nowrap">
             <Users className="w-4 h-4" /> Usuários
           </TabsTrigger>
-          <TabsTrigger value="billing" className="gap-2 data-[state=active]:bg-white">
+          <TabsTrigger value="billing" className="gap-2 data-[state=active]:bg-white whitespace-nowrap">
             <Landmark className="w-4 h-4" /> Entidades Cobradoras
           </TabsTrigger>
-          <TabsTrigger value="developments" className="gap-2 data-[state=active]:bg-white">
+          <TabsTrigger value="developments" className="gap-2 data-[state=active]:bg-white whitespace-nowrap">
             <Building2 className="w-4 h-4" /> Empreendimentos
           </TabsTrigger>
-          <TabsTrigger value="ia" className="gap-2 data-[state=active]:bg-white">
+          <TabsTrigger value="ia" className="gap-2 data-[state=active]:bg-white whitespace-nowrap">
             <MessageSquareMore className="w-4 h-4" /> Pré-atendimentos IA
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="space-y-4">
           <Card className="shadow-sm border-slate-200">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100">
-              <div>
+            <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100">
+              <div className="min-w-0">
                 <CardTitle>Usuários e escopo de acesso</CardTitle>
                 <CardDescription>
                   Crie o administrador master, administradores por empreendimento e demais usuários operacionais.
                 </CardDescription>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Dialog
                   open={userPasswordDialogOpen}
                   onOpenChange={(open) => {
@@ -817,7 +826,7 @@ export default function Settings() {
                     if (!open) setPasswordForm(initialPasswordForm);
                   }}
                 >
-                  <DialogContent className="max-w-md">
+                  <DialogContent className="w-[calc(100vw-1rem)] max-w-md">
                     <DialogHeader>
                       <DialogTitle>Trocar senha do usuário</DialogTitle>
                       <DialogDescription>
@@ -841,9 +850,10 @@ export default function Settings() {
                         />
                       </div>
 
-                      <div className="flex justify-end gap-2">
+                      <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
                         <Button
                           variant="outline"
+                          className="w-full sm:w-auto"
                           onClick={() => {
                             setUserPasswordDialogOpen(false);
                             setPasswordForm(initialPasswordForm);
@@ -852,7 +862,7 @@ export default function Settings() {
                           Cancelar
                         </Button>
                         <Button
-                          className="bg-emerald-600 hover:bg-emerald-700"
+                          className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700"
                           onClick={() => updateSystemUserPassword.mutate()}
                           disabled={updateSystemUserPassword.isPending}
                         >
@@ -872,7 +882,7 @@ export default function Settings() {
                 >
                   <DialogTrigger asChild>
                     <Button
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
                       onClick={openNewUserDialog}
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -880,7 +890,7 @@ export default function Settings() {
                     </Button>
                   </DialogTrigger>
 
-                  <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="w-[calc(100vw-1rem)] max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>
                         {isEditingUser ? "Editar usuário" : "Cadastrar usuário"}
@@ -1039,9 +1049,10 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 mt-4">
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-4">
                       <Button
                         variant="outline"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                           setUserDialogOpen(false);
                           resetUserForm();
@@ -1051,7 +1062,7 @@ export default function Settings() {
                       </Button>
 
                       <Button
-                        className="bg-emerald-600 hover:bg-emerald-700"
+                        className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700"
                         onClick={() =>
                           isEditingUser
                             ? updateSystemUser.mutate()
@@ -1072,18 +1083,22 @@ export default function Settings() {
             </CardHeader>
 
             <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <div className="rounded-2xl border bg-slate-50 p-4">
                   <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Total de usuários</p>
                   <p className="mt-2 text-2xl font-black text-slate-900">{systemUsers.length}</p>
                 </div>
                 <div className="rounded-2xl border bg-slate-50 p-4">
                   <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Admins de empreendimento</p>
-                  <p className="mt-2 text-2xl font-black text-slate-900">{systemUsers.filter((item) => item.role === "manager").length}</p>
+                  <p className="mt-2 text-2xl font-black text-slate-900">
+                    {systemUsers.filter((item) => item.role === "manager").length}
+                  </p>
                 </div>
                 <div className="rounded-2xl border bg-amber-50 border-amber-200 p-4">
                   <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">Bootstrap ativo</p>
-                  <p className="mt-2 text-2xl font-black text-amber-700">{systemUsers.filter((item) => item.isBootstrap && item.isActive).length}</p>
+                  <p className="mt-2 text-2xl font-black text-amber-700">
+                    {systemUsers.filter((item) => item.isBootstrap && item.isActive).length}
+                  </p>
                 </div>
               </div>
 
@@ -1097,11 +1112,13 @@ export default function Settings() {
                     <Card key={user.id} className="border-slate-200 shadow-none">
                       <CardContent className="p-5 space-y-4">
                         <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <h3 className="text-lg font-black text-slate-900">{user.name}</h3>
-                            <p className="text-sm text-slate-500">{user.username} • {user.email}</p>
+                          <div className="min-w-0">
+                            <h3 className="text-lg font-black text-slate-900 break-words">{user.name}</h3>
+                            <p className="text-sm text-slate-500 break-all">
+                              {user.username} • {user.email}
+                            </p>
                           </div>
-                          <div className="flex flex-col items-end gap-2">
+                          <div className="flex flex-col items-end gap-2 shrink-0">
                             <Badge className={user.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700"}>
                               {user.isActive ? "Ativo" : "Inativo"}
                             </Badge>
@@ -1114,22 +1131,26 @@ export default function Settings() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                           <div className="rounded-xl bg-slate-50 p-3">
                             <p className="text-xs uppercase text-slate-500 font-semibold">Perfil</p>
-                            <p className="font-semibold text-slate-800">{getRoleBadgeLabel(user.role)}</p>
+                            <p className="font-semibold text-slate-800 break-words">{getRoleBadgeLabel(user.role)}</p>
                           </div>
                           <div className="rounded-xl bg-slate-50 p-3">
                             <p className="text-xs uppercase text-slate-500 font-semibold">Entidade cobradora</p>
-                            <p className="font-semibold text-slate-800">{user.billingEntityName || "Global / não vinculada"}</p>
+                            <p className="font-semibold text-slate-800 break-words">
+                              {user.billingEntityName || "Global / não vinculada"}
+                            </p>
                           </div>
                           <div className="rounded-xl bg-slate-50 p-3 sm:col-span-2">
                             <p className="text-xs uppercase text-slate-500 font-semibold">Empreendimento</p>
-                            <p className="font-semibold text-slate-800">{user.developmentName || (user.role === "admin" ? "Acesso total do sistema" : "Sem vínculo específico")}</p>
+                            <p className="font-semibold text-slate-800 break-words">
+                              {user.developmentName || (user.role === "admin" ? "Acesso total do sistema" : "Sem vínculo específico")}
+                            </p>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap justify-end gap-2">
+                        <div className="flex flex-col sm:flex-row justify-end gap-2">
                           <Button
                             variant="outline"
-                            className="gap-2"
+                            className="gap-2 w-full sm:w-auto"
                             onClick={() => openPasswordDialog(user)}
                           >
                             <KeyRound className="h-4 w-4" />
@@ -1138,7 +1159,7 @@ export default function Settings() {
 
                           <Button
                             variant="outline"
-                            className="gap-2"
+                            className="gap-2 w-full sm:w-auto"
                             onClick={() => openEditUserDialog(user)}
                           >
                             <Pencil className="h-4 w-4" />
@@ -1156,8 +1177,8 @@ export default function Settings() {
 
         <TabsContent value="billing" className="space-y-4">
           <Card className="shadow-sm border-slate-200">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100">
-              <div>
+            <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100">
+              <div className="min-w-0">
                 <CardTitle>Entidades cobradoras</CardTitle>
                 <CardDescription>
                   Cada loteamento pode operar com CNPJ, banco, carteira e convênio próprios.
@@ -1173,7 +1194,7 @@ export default function Settings() {
               >
                 <DialogTrigger asChild>
                   <Button
-                    className="bg-emerald-600 hover:bg-emerald-700"
+                    className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
                     onClick={openNewBillingDialog}
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -1181,7 +1202,7 @@ export default function Settings() {
                   </Button>
                 </DialogTrigger>
 
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="w-[calc(100vw-1rem)] max-w-3xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
                       {isEditingBilling
@@ -1346,9 +1367,10 @@ export default function Settings() {
                     />
                   </div>
 
-                  <div className="flex justify-end gap-3 mt-4">
+                  <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-4">
                     <Button
                       variant="outline"
+                      className="w-full sm:w-auto"
                       onClick={() => {
                         setBillingDialogOpen(false);
                         resetBillingForm();
@@ -1358,7 +1380,7 @@ export default function Settings() {
                     </Button>
 
                     <Button
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700"
                       onClick={() =>
                         isEditingBilling
                           ? updateBillingEntity.mutate()
@@ -1390,13 +1412,13 @@ export default function Settings() {
                     <Card key={entity.id} className="border-slate-200 shadow-none">
                       <CardContent className="p-5 space-y-4">
                         <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <h3 className="text-lg font-black text-slate-900">
+                          <div className="min-w-0">
+                            <h3 className="text-lg font-black text-slate-900 break-words">
                               {entity.tradeName || entity.corporateName}
                             </h3>
-                            <p className="text-sm text-slate-500">{entity.corporateName}</p>
+                            <p className="text-sm text-slate-500 break-words">{entity.corporateName}</p>
                           </div>
-                          <Badge className="bg-emerald-100 text-emerald-700">
+                          <Badge className="bg-emerald-100 text-emerald-700 shrink-0">
                             {entity.cnabLayout || "CNAB240"}
                           </Badge>
                         </div>
@@ -1404,20 +1426,19 @@ export default function Settings() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                           <div className="rounded-xl bg-slate-50 p-3">
                             <p className="text-xs uppercase text-slate-500 font-semibold">CNPJ</p>
-                            <p className="font-semibold text-slate-800">{entity.document}</p>
+                            <p className="font-semibold text-slate-800 break-words">{entity.document}</p>
                           </div>
                           <div className="rounded-xl bg-slate-50 p-3">
                             <p className="text-xs uppercase text-slate-500 font-semibold">Banco</p>
-                            <p className="font-semibold text-slate-800">
-                              {entity.bankCode || "-"}{" "}
-                              {entity.bankName ? `- ${entity.bankName}` : ""}
+                            <p className="font-semibold text-slate-800 break-words">
+                              {entity.bankCode || "-"} {entity.bankName ? `- ${entity.bankName}` : ""}
                             </p>
                           </div>
                           <div className="rounded-xl bg-slate-50 p-3">
                             <p className="text-xs uppercase text-slate-500 font-semibold">
                               Agência / conta
                             </p>
-                            <p className="font-semibold text-slate-800">
+                            <p className="font-semibold text-slate-800 break-words">
                               {entity.agency || "-"} / {entity.accountNumber || "-"}
                             </p>
                           </div>
@@ -1425,22 +1446,22 @@ export default function Settings() {
                             <p className="text-xs uppercase text-slate-500 font-semibold">
                               Carteira / convênio
                             </p>
-                            <p className="font-semibold text-slate-800">
+                            <p className="font-semibold text-slate-800 break-words">
                               {entity.walletCode || "-"} / {entity.agreementCode || "-"}
                             </p>
                           </div>
                         </div>
 
                         {entity.notes ? (
-                          <div className="rounded-xl border border-slate-200 p-3 text-sm text-slate-600">
+                          <div className="rounded-xl border border-slate-200 p-3 text-sm text-slate-600 break-words">
                             {entity.notes}
                           </div>
                         ) : null}
 
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-col sm:flex-row justify-end gap-2">
                           <Button
                             variant="outline"
-                            className="gap-2"
+                            className="gap-2 w-full sm:w-auto"
                             onClick={() => openEditBillingDialog(entity)}
                           >
                             <Pencil className="h-4 w-4" />
@@ -1449,7 +1470,7 @@ export default function Settings() {
 
                           <Button
                             variant="destructive"
-                            className="gap-2"
+                            className="gap-2 w-full sm:w-auto"
                             onClick={() => handleDeleteBillingEntity(entity)}
                             disabled={deleteBillingEntity.isPending}
                           >
@@ -1468,8 +1489,8 @@ export default function Settings() {
 
         <TabsContent value="developments" className="space-y-4">
           <Card className="shadow-sm border-slate-200">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100">
-              <div>
+            <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-slate-100">
+              <div className="min-w-0">
                 <CardTitle>Empreendimentos</CardTitle>
                 <CardDescription>
                   Cadastre empreendimentos reais, vincule à entidade cobradora e informe os documentos da planta.
@@ -1485,7 +1506,7 @@ export default function Settings() {
               >
                 <DialogTrigger asChild>
                   <Button
-                    className="bg-emerald-600 hover:bg-emerald-700"
+                    className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
                     disabled={billingEntities.length === 0}
                     onClick={openNewDevelopmentDialog}
                   >
@@ -1494,7 +1515,7 @@ export default function Settings() {
                   </Button>
                 </DialogTrigger>
 
-                <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="w-[calc(100vw-1rem)] max-w-5xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
                       {isEditingDevelopment
@@ -1516,9 +1537,7 @@ export default function Settings() {
                         <p className="font-semibold mb-2">
                           Importante sobre as imagens
                         </p>
-                        <p>
-                          Use caminhos públicos do app, por exemplo:
-                        </p>
+                        <p>Use caminhos públicos do app, por exemplo:</p>
                         <div className="mt-2 space-y-1 text-xs break-all">
                           <p>/uploads/empreendimentos/residencial-portal-do-prado/planta-loteamento.pdf</p>
                           <p>/uploads/empreendimentos/residencial-portal-do-prado/planta-loteamento.jpg</p>
@@ -1733,29 +1752,18 @@ export default function Settings() {
                           Pré-visualização dos arquivos
                         </p>
 
-                        <div className="grid grid-cols-1 gap-2 text-xs text-slate-600">
-                          <p>
-                            <strong>Imagem principal:</strong>{" "}
-                            {developmentForm.img || "-"}
-                          </p>
-                          <p>
-                            <strong>Planta PDF:</strong>{" "}
-                            {developmentForm.plantPdfUrl || "-"}
-                          </p>
-                          <p>
-                            <strong>Planta imagem:</strong>{" "}
-                            {developmentForm.plantImageUrl || "-"}
-                          </p>
-                          <p>
-                            <strong>Perspectiva:</strong>{" "}
-                            {developmentForm.overviewImageUrl || "-"}
-                          </p>
+                        <div className="grid grid-cols-1 gap-2 text-xs text-slate-600 break-all">
+                          <p><strong>Imagem principal:</strong> {developmentForm.img || "-"}</p>
+                          <p><strong>Planta PDF:</strong> {developmentForm.plantPdfUrl || "-"}</p>
+                          <p><strong>Planta imagem:</strong> {developmentForm.plantImageUrl || "-"}</p>
+                          <p><strong>Perspectiva:</strong> {developmentForm.overviewImageUrl || "-"}</p>
                         </div>
                       </div>
 
-                      <div className="flex justify-end gap-3 mt-4">
+                      <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-4">
                         <Button
                           variant="outline"
+                          className="w-full sm:w-auto"
                           onClick={() => {
                             setDevelopmentDialogOpen(false);
                             resetDevelopmentForm();
@@ -1765,7 +1773,7 @@ export default function Settings() {
                         </Button>
 
                         <Button
-                          className="bg-emerald-600 hover:bg-emerald-700"
+                          className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700"
                           onClick={() =>
                             isEditingDevelopment
                               ? updateDevelopment.mutate()
@@ -1813,16 +1821,16 @@ export default function Settings() {
                           </Badge>
                         </div>
                         <div className="absolute bottom-4 left-4 right-4 text-white">
-                          <p className="font-black text-xl">{development.name}</p>
-                          <p className="text-sm text-slate-200">{development.city}</p>
+                          <p className="font-black text-xl break-words">{development.name}</p>
+                          <p className="text-sm text-slate-200 break-words">{development.city}</p>
                         </div>
                       </div>
 
                       <CardContent className="p-5 space-y-4">
-                        <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                           <div className="rounded-xl bg-slate-50 p-3">
                             <p className="text-xs uppercase text-slate-500 font-semibold">Preço</p>
-                            <p className="font-bold text-slate-800">{development.price}</p>
+                            <p className="font-bold text-slate-800 break-words">{development.price}</p>
                           </div>
 
                           <div className="rounded-xl bg-slate-50 p-3">
@@ -1832,11 +1840,11 @@ export default function Settings() {
                             <p className="font-bold text-slate-800">{development.totalLots}</p>
                           </div>
 
-                          <div className="rounded-xl bg-slate-50 p-3 col-span-2">
+                          <div className="rounded-xl bg-slate-50 p-3 sm:col-span-2">
                             <p className="text-xs uppercase text-slate-500 font-semibold">
                               Entidade cobradora
                             </p>
-                            <p className="font-bold text-slate-800">
+                            <p className="font-bold text-slate-800 break-words">
                               {development.billingEntityName || "Não vinculada"}
                             </p>
                           </div>
@@ -1852,9 +1860,9 @@ export default function Settings() {
                               href={development.plantPdfUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-center gap-2 text-sm text-blue-700 hover:underline"
+                              className="flex items-center gap-2 text-sm text-blue-700 hover:underline break-all"
                             >
-                              <FileText className="h-4 w-4" />
+                              <FileText className="h-4 w-4 shrink-0" />
                               Abrir planta PDF
                             </a>
                           ) : null}
@@ -1864,9 +1872,9 @@ export default function Settings() {
                               href={development.plantImageUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-center gap-2 text-sm text-blue-700 hover:underline"
+                              className="flex items-center gap-2 text-sm text-blue-700 hover:underline break-all"
                             >
-                              <ImageIcon className="h-4 w-4" />
+                              <ImageIcon className="h-4 w-4 shrink-0" />
                               Abrir planta em imagem
                             </a>
                           ) : null}
@@ -1876,9 +1884,9 @@ export default function Settings() {
                               href={development.overviewImageUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-center gap-2 text-sm text-blue-700 hover:underline"
+                              className="flex items-center gap-2 text-sm text-blue-700 hover:underline break-all"
                             >
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-4 w-4 shrink-0" />
                               Abrir perspectiva ilustrativa
                             </a>
                           ) : null}
@@ -1887,7 +1895,7 @@ export default function Settings() {
                         <div className="flex justify-end">
                           <Button
                             variant="outline"
-                            className="gap-2"
+                            className="gap-2 w-full sm:w-auto"
                             onClick={() => openEditDevelopmentDialog(development)}
                           >
                             <Pencil className="h-4 w-4" />
@@ -1923,27 +1931,21 @@ export default function Settings() {
                     <Card key={interest.id} className="border-slate-200 shadow-none">
                       <CardContent className="p-5 space-y-4">
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-lg font-black text-slate-900">
+                              <h3 className="text-lg font-black text-slate-900 break-words">
                                 {interest.fullName}
                               </h3>
-                              <Badge
-                                className={
-                                  interest.status === "converted_client"
-                                    ? "bg-emerald-100 text-emerald-700"
-                                    : "bg-blue-100 text-blue-700"
-                                }
-                              >
-                                {interest.status}
+                              <Badge className={getInterestStatusClass(interest.status)}>
+                                {getInterestStatusLabel(interest.status)}
                               </Badge>
                             </div>
-                            <p className="text-sm text-slate-500 mt-1">
+                            <p className="text-sm text-slate-500 mt-1 break-words">
                               Interesse em: <strong>{interest.projectName}</strong>
                             </p>
                           </div>
 
-                          <div className="text-sm text-slate-500 flex items-center gap-2">
+                          <div className="text-sm text-slate-500 flex items-center gap-2 shrink-0">
                             <CalendarDays className="h-4 w-4" />
                             {interest.createdAt
                               ? new Date(interest.createdAt).toLocaleString("pt-BR")
@@ -1956,7 +1958,7 @@ export default function Settings() {
                             <p className="text-xs uppercase text-slate-500 font-semibold flex items-center gap-1">
                               <Phone className="h-3.5 w-3.5" /> Telefone
                             </p>
-                            <p className="font-semibold text-slate-800 mt-1">{interest.phone}</p>
+                            <p className="font-semibold text-slate-800 mt-1 break-words">{interest.phone}</p>
                           </div>
 
                           <div className="rounded-xl bg-slate-50 p-3">
@@ -1972,7 +1974,7 @@ export default function Settings() {
                             <p className="text-xs uppercase text-slate-500 font-semibold">
                               Cidade / região
                             </p>
-                            <p className="font-semibold text-slate-800 mt-1">
+                            <p className="font-semibold text-slate-800 mt-1 break-words">
                               {interest.cityInterest}
                             </p>
                           </div>
@@ -1981,7 +1983,7 @@ export default function Settings() {
                             <p className="text-xs uppercase text-slate-500 font-semibold">
                               Prazo
                             </p>
-                            <p className="font-semibold text-slate-800 mt-1">
+                            <p className="font-semibold text-slate-800 mt-1 break-words">
                               {interest.timeline}
                             </p>
                           </div>
@@ -1990,7 +1992,7 @@ export default function Settings() {
                             <p className="text-xs uppercase text-slate-500 font-semibold">
                               Objetivo
                             </p>
-                            <p className="font-semibold text-slate-800 mt-1">
+                            <p className="font-semibold text-slate-800 mt-1 break-words">
                               {interest.objective}
                             </p>
                           </div>
@@ -1999,7 +2001,7 @@ export default function Settings() {
                             <p className="text-xs uppercase text-slate-500 font-semibold">
                               Faixa de investimento
                             </p>
-                            <p className="font-semibold text-slate-800 mt-1">
+                            <p className="font-semibold text-slate-800 mt-1 break-words">
                               {interest.budgetRange}
                             </p>
                           </div>
@@ -2008,17 +2010,17 @@ export default function Settings() {
                             <p className="text-xs uppercase text-slate-500 font-semibold">
                               Perfil informado à IA
                             </p>
-                            <p className="font-semibold text-slate-800 mt-1">
+                            <p className="font-semibold text-slate-800 mt-1 break-words">
                               {interest.familyProfile}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-3">
-                          <Button variant="outline">Atribuir corretor</Button>
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+                          <Button variant="outline" className="w-full sm:w-auto">Atribuir corretor</Button>
 
                           <Button
-                            className="bg-emerald-600 hover:bg-emerald-700"
+                            className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
                             disabled={
                               interest.status === "converted_client" ||
                               convertInterestToClient.isPending
