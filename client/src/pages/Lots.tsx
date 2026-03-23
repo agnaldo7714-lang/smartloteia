@@ -374,22 +374,22 @@ export default function Lots() {
   const selectedLotMapped = selectedLot ? Boolean(mapPoints[selectedLot.id]) : false;
 
   return (
-    <div className="space-y-6 flex flex-col h-[calc(100vh-8rem)]">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+    <div className="space-y-5 sm:space-y-6 flex flex-col min-h-0 lg:h-[calc(100vh-8rem)]">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between shrink-0">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Mapa Digital de Loteamentos
           </h1>
-          <p className="text-slate-500">
+          <p className="text-sm sm:text-base text-slate-500">
             {canManageLots
               ? "Gestor e administrador podem editar lotes e marcar a planta."
               : "Corretor pode consultar a planta e reservar lotes disponíveis."}
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="w-full xl:w-auto">
           <Select value={selectedDevelopmentId} onValueChange={handleMapChange}>
-            <SelectTrigger className="w-[320px] bg-white border-slate-300 font-medium">
+            <SelectTrigger className="w-full xl:w-[320px] bg-white border-slate-300 font-medium">
               <SelectValue placeholder="Selecione o Empreendimento" />
             </SelectTrigger>
             <SelectContent>
@@ -403,59 +403,59 @@ export default function Lots() {
         </div>
       </div>
 
-      <Card className="flex-1 shadow-md border-slate-200 bg-slate-50 overflow-hidden flex flex-col">
-        <div className="p-3 bg-white border-b border-slate-200 flex flex-wrap gap-4 justify-between items-center z-10 shrink-0 shadow-sm">
-          <div className="flex gap-4 items-center flex-wrap">
+      <Card className="flex-1 min-h-0 shadow-md border-slate-200 bg-slate-50 overflow-hidden flex flex-col">
+        <div className="p-3 bg-white border-b border-slate-200 flex flex-col gap-3 xl:flex-row xl:justify-between xl:items-center z-10 shrink-0 shadow-sm">
+          <div className="flex gap-2 sm:gap-3 items-center flex-wrap">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-md">
               <div className="w-3 h-3 rounded-sm bg-emerald-500 shadow-sm"></div>
-              <span className="text-sm font-semibold text-slate-700">
+              <span className="text-xs sm:text-sm font-semibold text-slate-700">
                 Disponível ({counts.disponivel})
               </span>
             </div>
 
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-md">
               <div className="w-3 h-3 rounded-sm bg-amber-400 shadow-sm"></div>
-              <span className="text-sm font-semibold text-slate-700">
+              <span className="text-xs sm:text-sm font-semibold text-slate-700">
                 Reservado ({counts.reservado})
               </span>
             </div>
 
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-md">
               <div className="w-3 h-3 rounded-sm bg-slate-300 shadow-sm"></div>
-              <span className="text-sm font-semibold text-slate-700">
+              <span className="text-xs sm:text-sm font-semibold text-slate-700">
                 Vendido ({counts.vendido})
               </span>
             </div>
 
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-md">
               <div className="w-3 h-3 rounded-sm bg-sky-500 shadow-sm"></div>
-              <span className="text-sm font-semibold text-slate-700">
+              <span className="text-xs sm:text-sm font-semibold text-slate-700">
                 Mapeados ({counts.mapeados})
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
+            <div className="relative w-full sm:w-60">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 placeholder="Buscar lote (ex: A-01)"
-                className="pl-9 h-9 w-52 bg-white border-slate-300"
+                className="pl-9 h-9 w-full bg-white border-slate-300"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
-            <Button variant="outline" size="sm" className="h-9 gap-2 text-slate-600">
+            <Button variant="outline" size="sm" className="h-9 gap-2 text-slate-600 w-full sm:w-auto">
               <Filter className="w-4 h-4" /> Filtros
             </Button>
           </div>
         </div>
 
-        <CardContent className="p-4 flex-1 overflow-hidden">
-          <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_420px] gap-4 h-full">
-            <div className="relative rounded-2xl border border-slate-200 bg-white overflow-hidden min-h-[600px]">
-              <div className="absolute top-4 left-4 z-30 flex flex-wrap gap-2">
+        <CardContent className="p-3 sm:p-4 flex-1 min-h-0 overflow-hidden">
+          <div className="grid grid-cols-1 2xl:grid-cols-[1.4fr_420px] gap-4 h-full min-h-0">
+            <div className="relative rounded-2xl border border-slate-200 bg-white overflow-hidden min-h-[360px] lg:min-h-[600px]">
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 flex flex-wrap gap-2 max-w-[calc(100%-110px)]">
                 {selectedDevelopment?.plantPdfUrl ? (
                   <a
                     href={selectedDevelopment.plantPdfUrl}
@@ -477,7 +477,7 @@ export default function Lots() {
                 ) : null}
               </div>
 
-              <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 bg-white/90 backdrop-blur p-2 rounded-lg shadow-lg border border-slate-200">
+              <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex flex-col gap-2 z-30 bg-white/90 backdrop-blur p-2 rounded-lg shadow-lg border border-slate-200">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -510,9 +510,9 @@ export default function Lots() {
                 </Button>
               </div>
 
-              <div className="absolute bottom-4 left-4 z-30 bg-white/95 border border-slate-200 rounded-xl p-3 shadow-sm max-w-md">
+              <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-auto z-30 bg-white/95 border border-slate-200 rounded-xl p-3 shadow-sm max-w-md">
                 <div className="flex items-start gap-2 text-xs text-slate-600">
-                  <LocateFixed className="h-4 w-4 text-sky-600 mt-0.5" />
+                  <LocateFixed className="h-4 w-4 text-sky-600 mt-0.5 shrink-0" />
                   <div>
                     <p className="font-semibold text-slate-800">
                       Como usar a planta real
@@ -528,7 +528,7 @@ export default function Lots() {
 
               {selectedDevelopment?.plantImageUrl ? (
                 <div className="h-full w-full overflow-auto bg-slate-100">
-                  <div className="min-w-full min-h-full flex items-start justify-center p-6">
+                  <div className="min-w-full min-h-full flex items-start justify-center p-3 sm:p-6">
                     <div className="origin-top" style={{ transform: `scale(${zoom})` }}>
                       <div ref={imageStageRef} className="relative inline-block">
                         <img
@@ -605,7 +605,7 @@ export default function Lots() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden flex flex-col min-h-[600px]">
+            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden flex flex-col min-h-[420px] lg:min-h-[600px] min-w-0">
               <div className="p-4 border-b border-slate-200">
                 <h3 className="font-bold text-slate-900">Lotes do empreendimento</h3>
                 <p className="text-sm text-slate-500">
@@ -615,7 +615,7 @@ export default function Lots() {
                 </p>
               </div>
 
-              <div className="flex-1 overflow-auto">
+              <div className="flex-1 overflow-auto min-h-0">
                 <div className="divide-y divide-slate-100">
                   {filteredLots.map((lot) => {
                     const isSelected = selectedLot?.id === lot.id;
@@ -630,46 +630,48 @@ export default function Lots() {
                           isSelected ? "bg-sky-50" : "hover:bg-slate-50"
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-black text-slate-900">
-                                Q.{lot.block} L.{lot.lot}
-                              </p>
-                              <Badge
-                                className={
-                                  lot.status === "Disponível"
-                                    ? "bg-emerald-100 text-emerald-700"
-                                    : lot.status === "Reservado"
-                                      ? "bg-amber-100 text-amber-800"
-                                      : "bg-slate-200 text-slate-700"
-                                }
-                              >
-                                {lot.status}
-                              </Badge>
-                              {isMapped ? (
-                                <Badge className="bg-sky-100 text-sky-700">
-                                  Mapeado
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-black text-slate-900">
+                                  Q.{lot.block} L.{lot.lot}
+                                </p>
+                                <Badge
+                                  className={
+                                    lot.status === "Disponível"
+                                      ? "bg-emerald-100 text-emerald-700"
+                                      : lot.status === "Reservado"
+                                        ? "bg-amber-100 text-amber-800"
+                                        : "bg-slate-200 text-slate-700"
+                                  }
+                                >
+                                  {lot.status}
                                 </Badge>
-                              ) : null}
-                            </div>
+                                {isMapped ? (
+                                  <Badge className="bg-sky-100 text-sky-700">
+                                    Mapeado
+                                  </Badge>
+                                ) : null}
+                              </div>
 
-                            <p className="text-xs text-slate-500 mt-1">
-                              {lot.code} • {lot.areaM2} m² • Frente {lot.frontM} m
-                            </p>
-                            <p className="text-sm font-bold text-emerald-700 mt-1">
-                              R$ {lot.price}
-                            </p>
+                              <p className="text-xs text-slate-500 mt-1 break-words">
+                                {lot.code} • {lot.areaM2} m² • Frente {lot.frontM} m
+                              </p>
+                              <p className="text-sm font-bold text-emerald-700 mt-1">
+                                R$ {lot.price}
+                              </p>
+                            </div>
                           </div>
 
-                          <div className="flex flex-col gap-2 shrink-0">
+                          <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
                             {canManageLots ? (
                               <>
                                 <Button
                                   type="button"
                                   size="sm"
                                   variant="outline"
-                                  className="gap-2"
+                                  className="gap-2 w-full sm:w-auto"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     startMappingLot(lot);
@@ -683,7 +685,7 @@ export default function Lots() {
                                   type="button"
                                   size="sm"
                                   variant="ghost"
-                                  className="gap-2"
+                                  className="gap-2 w-full sm:w-auto"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     openEditLot(lot);
@@ -699,7 +701,7 @@ export default function Lots() {
                               <Button
                                 type="button"
                                 size="sm"
-                                className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+                                className="gap-2 bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleReserveLot(lot);
@@ -723,7 +725,7 @@ export default function Lots() {
                 </div>
               </div>
 
-              <div className="border-t border-slate-200 p-4 bg-slate-50">
+              <div className="border-t border-slate-200 p-4 bg-slate-50 shrink-0">
                 {selectedLot ? (
                   <div className="space-y-4">
                     <div>
@@ -744,7 +746,7 @@ export default function Lots() {
                         </Badge>
                       </div>
 
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-slate-500 break-words">
                         {selectedLot.code} • {selectedLot.areaM2} m² • Frente {selectedLot.frontM} m
                       </p>
                       <p className="text-base font-black text-emerald-700 mt-1">
@@ -752,7 +754,7 @@ export default function Lots() {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {canManageLots ? (
                         <>
                           <Button
@@ -807,7 +809,7 @@ export default function Lots() {
           </div>
 
           <div className="mt-4 flex gap-3 z-20 bg-white/90 backdrop-blur p-3 rounded-lg shadow-sm border border-slate-200">
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 min-w-0">
               <p className="text-[10px] font-bold text-slate-500 uppercase">
                 Infraestrutura do Empreendimento
               </p>
@@ -831,7 +833,7 @@ export default function Lots() {
       </Card>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Editar Lote {selectedLot?.block}-{selectedLot?.lot}
@@ -865,7 +867,7 @@ export default function Lots() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Área (m²)</Label>
                   <Input
@@ -911,12 +913,12 @@ export default function Lots() {
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setIsEditDialogOpen(false)}>
               Cancelar
             </Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={handleSaveLot}
               disabled={updateLotMutation.isPending}
             >
