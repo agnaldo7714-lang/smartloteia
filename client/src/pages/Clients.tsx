@@ -117,6 +117,30 @@ const emptyForm: ClientFormState = {
   notes: "",
 };
 
+function statusLabel(status?: string | null) {
+  switch (status) {
+    case "lead":
+      return "Lead";
+    case "inactive":
+      return "Inativo";
+    case "active":
+    default:
+      return "Ativo";
+  }
+}
+
+function statusClass(status?: string | null) {
+  switch (status) {
+    case "lead":
+      return "bg-blue-100 text-blue-700 border-blue-200";
+    case "inactive":
+      return "bg-slate-100 text-slate-700 border-slate-200";
+    case "active":
+    default:
+      return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  }
+}
+
 export default function ClientsPage() {
   const queryClient = useQueryClient();
 
@@ -494,8 +518,8 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-4">
+    <div className="space-y-5 sm:space-y-6 min-w-0">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardDescription>Total de clientes</CardDescription>
@@ -550,8 +574,8 @@ export default function ClientsPage() {
       </div>
 
       <Card className="border-0 shadow-md">
-        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
+        <CardHeader className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0">
             <CardTitle>Clientes</CardTitle>
             <CardDescription>
               Admin e gestor podem cadastrar, editar, excluir/inativar e atribuir corretor.
@@ -559,8 +583,8 @@ export default function ClientsPage() {
             </CardDescription>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <div className="relative min-w-[280px]">
+          <div className="flex w-full xl:w-auto flex-col xl:flex-row gap-2">
+            <div className="relative w-full xl:min-w-[320px]">
               <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
               <Input
                 className="pl-9"
@@ -570,7 +594,7 @@ export default function ClientsPage() {
               />
             </div>
 
-            <div className="min-w-[180px]">
+            <div className="w-full xl:min-w-[180px]">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filtrar status" />
@@ -589,14 +613,14 @@ export default function ClientsPage() {
                 <Button
                   variant="outline"
                   onClick={handlePurgeInactive}
-                  className="gap-2"
+                  className="gap-2 w-full xl:w-auto"
                   disabled={purgeInactiveMutation.isPending}
                 >
                   <Eraser className="h-4 w-4" />
                   Limpar inativos
                 </Button>
 
-                <Button onClick={openCreateModal} className="gap-2">
+                <Button onClick={openCreateModal} className="gap-2 w-full xl:w-auto">
                   <PlusCircle className="h-4 w-4" />
                   Novo cliente
                 </Button>
@@ -615,122 +639,233 @@ export default function ClientsPage() {
               Nenhum cliente encontrado.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead>Local / Origem</TableHead>
-                    <TableHead>Empreendimento</TableHead>
-                    <TableHead>Corretor</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-
-                <TableBody>
-                  {filteredClients.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="font-medium">{item.fullName}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {item.objective || item.profileNotes || "Sem detalhes"}
+            <>
+              <div className="block lg:hidden space-y-4">
+                {filteredClients.map((item) => (
+                  <Card key={item.id} className="border shadow-none">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-900 break-words">
+                            {item.fullName}
+                          </div>
+                          <div className="text-sm text-muted-foreground break-words">
+                            {item.objective || item.profileNotes || "Sem detalhes"}
+                          </div>
                         </div>
-                      </TableCell>
 
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
+                        <Badge variant="outline" className={statusClass(item.status)}>
+                          {statusLabel(item.status)}
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 text-sm">
+                        <div className="rounded-lg bg-slate-50 p-3 space-y-2">
+                          <div className="flex items-center gap-2">
                             <Phone className="h-4 w-4 text-muted-foreground" />
-                            <span>{item.phone || "-"}</span>
+                            <span className="break-words">{item.phone || "-"}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span>{item.email || "-"}</span>
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="break-all">{item.email || "-"}</span>
                           </div>
                         </div>
-                      </TableCell>
 
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
+                        <div className="rounded-lg bg-slate-50 p-3 space-y-2">
+                          <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span>{item.city || "-"}</span>
+                            <span className="break-words">{item.city || "-"}</span>
                           </div>
                           <div className="text-xs text-muted-foreground">
                             Origem: {item.source || "-"}
                           </div>
                         </div>
-                      </TableCell>
 
-                      <TableCell>{item.projectName || "-"}</TableCell>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="rounded-lg bg-slate-50 p-3">
+                            <div className="text-muted-foreground text-xs mb-1">
+                              Empreendimento
+                            </div>
+                            <div className="font-medium break-words">
+                              {item.projectName || "-"}
+                            </div>
+                          </div>
 
-                      <TableCell>
-                        {item.brokerName ? (
-                          <Badge>{item.brokerName}</Badge>
-                        ) : (
-                          <Badge variant="secondary">Sem corretor</Badge>
-                        )}
-                      </TableCell>
-
-                      <TableCell>
-                        <Badge variant="outline">{item.status || "active"}</Badge>
-                      </TableCell>
-
-                      <TableCell className="text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {canManageClients ? (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="gap-2"
-                                onClick={() => openBrokerModal(item)}
-                              >
-                                <BriefcaseBusiness className="h-4 w-4" />
-                                Corretor
-                              </Button>
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="gap-2"
-                                onClick={() => openEditModal(item)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                                Editar
-                              </Button>
-
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                className="gap-2"
-                                onClick={() => handleDelete(item)}
-                                disabled={deleteClientMutation.isPending}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Excluir
-                              </Button>
-                            </>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              Visualização
-                            </span>
-                          )}
+                          <div className="rounded-lg bg-slate-50 p-3">
+                            <div className="text-muted-foreground text-xs mb-1">
+                              Corretor
+                            </div>
+                            <div className="font-medium break-words">
+                              {item.brokerName || "Sem corretor"}
+                            </div>
+                          </div>
                         </div>
-                      </TableCell>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {canManageClients ? (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-2"
+                              onClick={() => openBrokerModal(item)}
+                            >
+                              <BriefcaseBusiness className="h-4 w-4" />
+                              Corretor
+                            </Button>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-2"
+                              onClick={() => openEditModal(item)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                              Editar
+                            </Button>
+
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="gap-2"
+                              onClick={() => handleDelete(item)}
+                              disabled={deleteClientMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Excluir
+                            </Button>
+                          </>
+                        ) : (
+                          <div className="text-xs text-muted-foreground sm:col-span-3">
+                            Visualização
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="hidden lg:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Contato</TableHead>
+                      <TableHead>Local / Origem</TableHead>
+                      <TableHead>Empreendimento</TableHead>
+                      <TableHead>Corretor</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+
+                  <TableBody>
+                    {filteredClients.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="font-medium">{item.fullName}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {item.objective || item.profileNotes || "Sem detalhes"}
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Phone className="h-4 w-4 text-muted-foreground" />
+                              <span>{item.phone || "-"}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                              <span>{item.email || "-"}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm">
+                              <MapPin className="h-4 w-4 text-muted-foreground" />
+                              <span>{item.city || "-"}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Origem: {item.source || "-"}
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        <TableCell>{item.projectName || "-"}</TableCell>
+
+                        <TableCell>
+                          {item.brokerName ? (
+                            <Badge>{item.brokerName}</Badge>
+                          ) : (
+                            <Badge variant="secondary">Sem corretor</Badge>
+                          )}
+                        </TableCell>
+
+                        <TableCell>
+                          <Badge variant="outline" className={statusClass(item.status)}>
+                            {statusLabel(item.status)}
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell className="text-right">
+                          <div className="flex flex-wrap justify-end gap-2">
+                            {canManageClients ? (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-2"
+                                  onClick={() => openBrokerModal(item)}
+                                >
+                                  <BriefcaseBusiness className="h-4 w-4" />
+                                  Corretor
+                                </Button>
+
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-2"
+                                  onClick={() => openEditModal(item)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  Editar
+                                </Button>
+
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="gap-2"
+                                  onClick={() => handleDelete(item)}
+                                  disabled={deleteClientMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Excluir
+                                </Button>
+                              </>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                Visualização
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent className="sm:max-w-[820px]">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-[820px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingClient ? "Editar cliente" : "Novo cliente"}
@@ -889,9 +1024,10 @@ export default function ClientsPage() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 variant="outline"
+                className="w-full sm:w-auto"
                 onClick={() => {
                   setOpenForm(false);
                   setEditingClient(null);
@@ -902,6 +1038,7 @@ export default function ClientsPage() {
               </Button>
 
               <Button
+                className="w-full sm:w-auto"
                 onClick={handleSave}
                 disabled={
                   createClientMutation.isPending || updateClientMutation.isPending
@@ -917,7 +1054,7 @@ export default function ClientsPage() {
       </Dialog>
 
       <Dialog open={brokerDialogOpen} onOpenChange={setBrokerDialogOpen}>
-        <DialogContent className="sm:max-w-[620px]">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-[620px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Atribuir corretor</DialogTitle>
             <DialogDescription>
@@ -964,9 +1101,10 @@ export default function ClientsPage() {
               </Select>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 variant="outline"
+                className="w-full sm:w-auto"
                 onClick={() => {
                   setBrokerDialogOpen(false);
                   setSelectedClient(null);
@@ -977,9 +1115,9 @@ export default function ClientsPage() {
               </Button>
 
               <Button
+                className="w-full sm:w-auto gap-2"
                 onClick={handleSaveBroker}
                 disabled={assignBrokerMutation.isPending}
-                className="gap-2"
               >
                 <BriefcaseBusiness className="h-4 w-4" />
                 {assignBrokerMutation.isPending ? "Salvando..." : "Confirmar"}
