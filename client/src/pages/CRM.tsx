@@ -430,11 +430,11 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6 min-w-0">
       <Card className="border-0 shadow-md">
-        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle className="text-2xl">Leads</CardTitle>
+        <CardHeader className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="text-xl sm:text-2xl">Leads</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               Cadastro, aprovação e andamento comercial dos leads
             </p>
@@ -443,7 +443,7 @@ export default function LeadsPage() {
           <div className="flex flex-wrap gap-2">
             <Button
               onClick={() => setLeadModalOpen(true)}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto"
             >
               <PlusCircle className="h-4 w-4" />
               Novo Lead
@@ -452,7 +452,7 @@ export default function LeadsPage() {
         </CardHeader>
 
         <CardContent>
-          <div className="grid gap-3 md:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <Card className="shadow-sm">
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground">Total</p>
@@ -481,7 +481,7 @@ export default function LeadsPage() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm">
+            <Card className="shadow-sm sm:col-span-2 xl:col-span-1">
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground">Vendidos</p>
                 <p className="text-2xl font-bold">{totalByStatus.vendidos}</p>
@@ -500,7 +500,7 @@ export default function LeadsPage() {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-2">
               <Label>Buscar</Label>
               <div className="relative">
@@ -588,13 +588,13 @@ export default function LeadsPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleApplyFilters} className="gap-2">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+            <Button onClick={handleApplyFilters} className="gap-2 w-full sm:w-auto">
               <Filter className="h-4 w-4" />
               Aplicar filtro
             </Button>
 
-            <Button variant="outline" onClick={handleClearFilters}>
+            <Button variant="outline" onClick={handleClearFilters} className="w-full sm:w-auto">
               Limpar
             </Button>
           </div>
@@ -616,97 +616,182 @@ export default function LeadsPage() {
               Nenhum lead encontrado.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Lead</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead>Origem</TableHead>
-                    <TableHead>Corretor</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Empreendimento</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-
-                <TableBody>
-                  {leads.map((lead) => (
-                    <TableRow key={lead.id}>
-                      <TableCell>
-                        <div className="font-medium">{lead.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {lead.clientId ? "Cliente vinculado" : "Ainda não convertido"}
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          <span>{lead.phone}</span>
-                        </div>
-                        {lead.email ? (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {lead.email}
+            <>
+              <div className="block lg:hidden space-y-4">
+                {leads.map((lead) => (
+                  <Card key={lead.id} className="border shadow-none">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-900 break-words">
+                            {lead.name}
                           </div>
-                        ) : null}
-                      </TableCell>
+                          <div className="text-xs text-muted-foreground">
+                            {lead.clientId ? "Cliente vinculado" : "Ainda não convertido"}
+                          </div>
+                        </div>
 
-                      <TableCell>{lead.source || "-"}</TableCell>
-
-                      <TableCell>{getBrokerName(lead.broker)}</TableCell>
-
-                      <TableCell>
                         <Badge variant={getBadgeVariant(lead.status) as any}>
                           {statusLabel[lead.status]}
                         </Badge>
-                      </TableCell>
+                      </div>
 
-                      <TableCell>{lead.development?.name || "-"}</TableCell>
-
-                      <TableCell className="text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-2"
-                            onClick={() => handleOpenActModal(lead)}
-                          >
-                            <UserCheck className="h-4 w-4" />
-                            Atuar
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            className="gap-2"
-                            onClick={() => approveLeadMutation.mutate(lead.id)}
-                            disabled={
-                              approveLeadMutation.isPending ||
-                              lead.status !== "NOVO"
-                            }
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                            Aprovar
-                          </Button>
+                      <div className="grid grid-cols-1 gap-3 text-sm">
+                        <div className="rounded-lg bg-slate-50 p-3">
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span className="break-words">{lead.phone}</span>
+                          </div>
+                          {lead.email ? (
+                            <div className="text-xs text-muted-foreground mt-2 break-all">
+                              {lead.email}
+                            </div>
+                          ) : null}
                         </div>
-                      </TableCell>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="rounded-lg bg-slate-50 p-3">
+                            <div className="text-xs text-muted-foreground mb-1">Origem</div>
+                            <div className="font-medium break-words">{lead.source || "-"}</div>
+                          </div>
+
+                          <div className="rounded-lg bg-slate-50 p-3">
+                            <div className="text-xs text-muted-foreground mb-1">Corretor</div>
+                            <div className="font-medium break-words">
+                              {getBrokerName(lead.broker)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg bg-slate-50 p-3">
+                          <div className="text-xs text-muted-foreground mb-1">Empreendimento</div>
+                          <div className="font-medium break-words">
+                            {lead.development?.name || "-"}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                          onClick={() => handleOpenActModal(lead)}
+                        >
+                          <UserCheck className="h-4 w-4" />
+                          Atuar
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => approveLeadMutation.mutate(lead.id)}
+                          disabled={
+                            approveLeadMutation.isPending ||
+                            lead.status !== "NOVO"
+                          }
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          Aprovar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="hidden lg:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Lead</TableHead>
+                      <TableHead>Contato</TableHead>
+                      <TableHead>Origem</TableHead>
+                      <TableHead>Corretor</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Empreendimento</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+
+                  <TableBody>
+                    {leads.map((lead) => (
+                      <TableRow key={lead.id}>
+                        <TableCell>
+                          <div className="font-medium">{lead.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {lead.clientId ? "Cliente vinculado" : "Ainda não convertido"}
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span>{lead.phone}</span>
+                          </div>
+                          {lead.email ? (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {lead.email}
+                            </div>
+                          ) : null}
+                        </TableCell>
+
+                        <TableCell>{lead.source || "-"}</TableCell>
+
+                        <TableCell>{getBrokerName(lead.broker)}</TableCell>
+
+                        <TableCell>
+                          <Badge variant={getBadgeVariant(lead.status) as any}>
+                            {statusLabel[lead.status]}
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell>{lead.development?.name || "-"}</TableCell>
+
+                        <TableCell className="text-right">
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => handleOpenActModal(lead)}
+                            >
+                              <UserCheck className="h-4 w-4" />
+                              Atuar
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              className="gap-2"
+                              onClick={() => approveLeadMutation.mutate(lead.id)}
+                              disabled={
+                                approveLeadMutation.isPending ||
+                                lead.status !== "NOVO"
+                              }
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              Aprovar
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={leadModalOpen} onOpenChange={setLeadModalOpen}>
-        <DialogContent className="sm:max-w-[640px]">
+        <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-[640px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo Lead</DialogTitle>
           </DialogHeader>
 
           <div className="grid gap-4 py-2">
-            <div className="grid gap-2 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Nome *</Label>
                 <Input
@@ -736,7 +821,7 @@ export default function LeadsPage() {
               </div>
             </div>
 
-            <div className="grid gap-2 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>E-mail</Label>
                 <Input
@@ -779,7 +864,7 @@ export default function LeadsPage() {
               </div>
             </div>
 
-            <div className="grid gap-2 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Corretor responsável</Label>
                 <Select
@@ -845,14 +930,16 @@ export default function LeadsPage() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 variant="outline"
+                className="w-full sm:w-auto"
                 onClick={() => setLeadModalOpen(false)}
               >
                 Cancelar
               </Button>
               <Button
+                className="w-full sm:w-auto"
                 onClick={handleCreateLead}
                 disabled={createLeadMutation.isPending}
               >
@@ -864,21 +951,21 @@ export default function LeadsPage() {
       </Dialog>
 
       <Dialog open={actionModalOpen} onOpenChange={setActionModalOpen}>
-        <DialogContent className="sm:max-w-[640px]">
+        <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-[640px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Atuar no Lead</DialogTitle>
           </DialogHeader>
 
           <div className="grid gap-4 py-2">
             <div className="rounded-lg border p-3 bg-muted/30">
-              <div className="font-medium">{selectedLead?.name || "-"}</div>
-              <div className="text-sm text-muted-foreground">
+              <div className="font-medium break-words">{selectedLead?.name || "-"}</div>
+              <div className="text-sm text-muted-foreground break-words">
                 {selectedLead?.phone || "-"}{" "}
                 {selectedLead?.email ? `• ${selectedLead.email}` : ""}
               </div>
             </div>
 
-            <div className="grid gap-2 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
@@ -943,14 +1030,16 @@ export default function LeadsPage() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
               <Button
                 variant="outline"
+                className="w-full sm:w-auto"
                 onClick={() => setActionModalOpen(false)}
               >
                 Cancelar
               </Button>
               <Button
+                className="w-full sm:w-auto"
                 onClick={() => updateLeadMutation.mutate()}
                 disabled={updateLeadMutation.isPending}
               >
