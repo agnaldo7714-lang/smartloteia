@@ -1,0 +1,48 @@
+name: Temporary Horizonte V16 Handoff
+
+on:
+  push:
+    paths:
+      - '.github/workflows/temp-horizonte-v16-handoff.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  handoff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read temporary signed links from issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BODY="$(gh issue view 2 --repo "${GITHUB_REPOSITORY}" --json body --jq .body)"
+          APK_URL="$(printf '%s\n' "$BODY" | sed -n 's/.*\[APK V1.6\](\(https:[^)]*\)).*/\1/p')"
+          SRC_URL="$(printf '%s\n' "$BODY" | sed -n 's/.*\[Fonte V1.6\](\(https:[^)]*\)).*/\1/p')"
+          test -n "$APK_URL"
+          test -n "$SRC_URL"
+          printf '%s' "$APK_URL" > /tmp/apk_url
+          printf '%s' "$SRC_URL" > /tmp/src_url
+
+      - name: Download and verify V1.6 assets
+        run: |
+          curl -fL --retry 3 "$(cat /tmp/apk_url)" -o Horizonte-Artificial-v1.6.0-glass-cockpit-debug.apk
+          curl -fL --retry 3 "$(cat /tmp/src_url)" -o Horizonte-Artificial-v1.6.0-source.zip
+          echo "630af86203f0caf4f38414f4407c974c0479a44ad7e057f38d724ac4b9a61a13  Horizonte-Artificial-v1.6.0-glass-cockpit-debug.apk" | sha256sum -c -
+          echo "e3be26c6bb8618c642301f288b24fcc9a79f55e89dda8623ec80903c9c0b0fce  Horizonte-Artificial-v1.6.0-source.zip" | sha256sum -c -
+          ls -lh Horizonte-Artificial-v1.6.0-glass-cockpit-debug.apk Horizonte-Artificial-v1.6.0-source.zip
+
+      - name: Publish temporary public transfer release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="temp-horizonte-v1.6-handoff"
+          gh release delete "$TAG" --repo "${GITHUB_REPOSITORY}" --yes >/dev/null 2>&1 || true
+          gh release create "$TAG" \
+            Horizonte-Artificial-v1.6.0-glass-cockpit-debug.apk \
+            Horizonte-Artificial-v1.6.0-source.zip \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "TEMP Horizonte V1.6 Handoff" \
+            --notes "Temporary transfer release for validated V1.6 files."
