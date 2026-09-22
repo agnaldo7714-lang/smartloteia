@@ -1,0 +1,27 @@
+name: Temp Horizonte to Bridge
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/temp-horizonte-to-bridge.yml'
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download validated APK
+        run: |
+          curl -fL --retry 3 'https://github.com/agnaldo7714-lang/smartloteia/releases/download/temp-horizonte-v1.5.1-handoff/Horizonte-Artificial-v1.5.1-portrait-safety-debug.apk' -o /tmp/horizonte.apk
+          echo "fd6905f1222785a27d8d3a65d85dd11e9494abe212cdef9f3b3af4c4347ab3bc  /tmp/horizonte.apk" | sha256sum -c -
+          test "$(stat -c%s /tmp/horizonte.apk)" = "161699930"
+
+      - name: Upload bytes to temporary bridge
+        run: |
+          curl -fL -X PUT \
+            -H 'content-type: application/zip' \
+            -H 'content-length: 161699930' \
+            -H 'x-amz-checksum-sha256: /WkF8SInhaJ9jTpl2F3RHpSUq+ISze+fOzr0xDR6s7w=' \
+            -H 'x-amz-server-side-encryption: AES256' \
+            --data-binary '@/tmp/horizonte.apk' \
+            'https://heygen-resources-prod.s3-accelerate.amazonaws.com/external_upload_staging/b4a72a5e10ad494cb9a765b087acbd56/original.zip?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA3FLD4S3AS7WYJKBK%2F20260922%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260922T192023Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=content-length%3Bcontent-type%3Bhost%3Bx-amz-checksum-sha256%3Bx-amz-server-side-encryption&X-Amz-Signature=195331de044dc1d6dbcd2a4b4cb6234a86e2d4d49d3020dbdcc0fd5fa4c2b662'
