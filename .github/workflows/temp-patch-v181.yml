@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Patch Gofile request without exposing temporary token
         run: |
           python3 - <<'PY'
@@ -22,6 +24,8 @@ jobs:
           p=Path('.github/workflows/temp-horizonte-v181-chat.yml')
           s=p.read_text()
           s=s.replace('/download/direct/', '/download/web/')
+          if 'Referer: https://gofile.io/' in s:
+              raise SystemExit(0)
           cookie='            -H "Cookie: accountToken='
           lines=s.splitlines()
           out=[]
