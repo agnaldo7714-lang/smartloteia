@@ -1,0 +1,42 @@
+name: Horizonte V181 Gofile Artifact Bridge
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'horizonte-v181-gofile-trigger.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download GoFile helper
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3             https://raw.githubusercontent.com/martadams89/gofile-dl/main/run.py             -o /tmp/gofile_run.py
+          python -m pip install --quiet requests pathvalidate curl_cffi
+
+      - name: Download corrected APK from GoFile page
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gofile-out /tmp/gofile-config
+          CONFIG_DIR=/tmp/gofile-config python /tmp/gofile_run.py             "https://gofile.io/d/ajND2QUL"             -d /tmp/gofile-out
+
+          APK="$(find /tmp/gofile-out -type f -name 'Horizonte-Artificial-v1.8.1-PFD-test-debug.apk' -print -quit)"
+          test -n "$APK"
+          echo "APK=$APK"
+          echo "0a3549f7a60824316108d596abe05682a0c4b964a99780870e8e8cfe2aeea47e  $APK" | sha256sum -c -
+          test "$(stat -c%s "$APK")" = "159827202"
+          cp "$APK" ./Horizonte-Artificial-v1.8.1-PFD-test-debug.apk
+
+      - name: Upload temporary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Horizonte-Artificial-v1.8.1-PFD-test-debug
+          path: Horizonte-Artificial-v1.8.1-PFD-test-debug.apk
+          if-no-files-found: error
+          retention-days: 1
