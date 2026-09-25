@@ -1,0 +1,42 @@
+name: Temp Patch V1.8.1 Handoff
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/temp-patch-v181.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Gofile request without exposing temporary token
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/temp-horizonte-v181-chat.yml')
+          s=p.read_text()
+          s=s.replace('/download/direct/', '/download/web/')
+          cookie='            -H "Cookie: accountToken='
+          lines=s.splitlines()
+          out=[]
+          added=False
+          for line in lines:
+              out.append(line)
+              if cookie in line and not added:
+                  out.append('            -H "Referer: https://gofile.io/" \\')
+                  out.append('            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36" \\')
+                  out.append('            -H "Accept: */*" \\')
+                  added=True
+          p.write_text('\n'.join(out)+'\n')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/temp-horizonte-v181-chat.yml
+          git commit -m "temp: patch V1.8.1 Gofile browser headers"
+          git push
