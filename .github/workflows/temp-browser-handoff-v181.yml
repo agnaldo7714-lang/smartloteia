@@ -27,7 +27,7 @@ jobs:
 
       - name: Download APK through Gofile web UI
         run: |
-          cat > /tmp/download.mjs <<'JS'
+          cat > download.mjs <<'JS'
           import { chromium } from 'playwright';
           import fs from 'fs';
 
@@ -77,7 +77,7 @@ jobs:
           const s=fs.statSync('Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk');
           console.log('Downloaded bytes:',s.size);
           JS
-          node /tmp/download.mjs
+          node download.mjs
 
           echo "1d485fa2ad2f73c45feb6cb5e7ebe3b61f8091e432e2c2868d543c569ed96a13  Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk" | sha256sum -c -
           test "$(stat -c%s Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk)" = "159835506"
