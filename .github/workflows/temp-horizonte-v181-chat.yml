@@ -11,30 +11,14 @@ jobs:
   handoff:
     runs-on: ubuntu-latest
     steps:
-      - name: Create temporary Gofile download session
-        run: |
-          set -euo pipefail
-          printf 'x' > /tmp/session.txt
-          RESP="$(curl -fsS -X POST https://upload.gofile.io/uploadfile -F 'file=@/tmp/session.txt')"
-          TOKEN="$(printf '%s' "$RESP" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["guestToken"])')"
-          test -n "$TOKEN"
-          echo "GOFILE_TOKEN=$TOKEN" >> "$GITHUB_ENV"
-
       - name: Download corrected V1.8.1 APK
         run: |
           set -euo pipefail
-          META="$(curl -fsS \
-            -H "Authorization: Bearer $GOFILE_TOKEN" \
-            "https://api.gofile.io/contents/1707517f-4483-48db-8a2c-88a8412e84a2")"
-          printf '%s' "$META" > /tmp/meta.json
-          LINK="$(python3 -c "import json; d=json.load(open('/tmp/meta.json')); print(d['data']['children']['00ec7766-f82a-4e7e-89bf-75839bd94a6a']['link'])")"
-          test -n "$LINK"
+          URL="https://store3.gofile.io/download/web/00ec7766-f82a-4e7e-89bf-75839bd94a6a/Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk"
           curl -fL --retry 3 \
-            -H "Cookie: accountToken=$GOFILE_TOKEN" \
-            "$LINK" \
+            -H "Cookie: accountToken=BLzPri9IsnTJtVAEVBKK6uhXfkVu7xqV" \
+            "$URL" \
             -o Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk
-          stat -c '%s' Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk
-          sha256sum Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk
           echo "1d485fa2ad2f73c45feb6cb5e7ebe3b61f8091e432e2c2868d543c569ed96a13  Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk" | sha256sum -c -
           test "$(stat -c%s Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk)" = "159835506"
 
