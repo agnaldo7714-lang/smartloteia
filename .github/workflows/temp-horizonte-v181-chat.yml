@@ -27,14 +27,7 @@ jobs:
             -H "Authorization: Bearer $GOFILE_TOKEN" \
             "https://api.gofile.io/contents/1707517f-4483-48db-8a2c-88a8412e84a2")"
           printf '%s' "$META" > /tmp/meta.json
-          LINK="$(python3 - <<'PY'
-import json
-d=json.load(open('/tmp/meta.json'))
-children=d['data']['children']
-target=children['00ec7766-f82a-4e7e-89bf-75839bd94a6a']
-print(target['link'])
-PY
-)"
+          LINK="$(python3 -c "import json; d=json.load(open('/tmp/meta.json')); print(d['data']['children']['00ec7766-f82a-4e7e-89bf-75839bd94a6a']['link'])")"
           test -n "$LINK"
           curl -fL --retry 3 \
             -H "Cookie: accountToken=$GOFILE_TOKEN" \
