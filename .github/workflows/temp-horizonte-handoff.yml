@@ -17,21 +17,20 @@ jobs:
       - name: Download validated APK
         run: |
           curl -fL --retry 3 --retry-delay 2 \
-            'https://release-assets.githubusercontent.com/github-production-release-asset/1317262216/1b3e15f8-69ac-471e-94c5-f99da75e3e35?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-09-25T02%3A23%3A37Z&rscd=attachment%3B+filename%3DHorizonte-Artificial-v1.8.0-PFD-test-debug.apk&rsct=application%2Fvnd.android.package-archive&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-09-25T01%3A23%3A25Z&ske=2026-09-25T02%3A23%3A37Z&sks=b&skv=2018-11-09&sig=zi%2FLZoHq2BcwUK52IyloHl%2BUGFLNkWfZolKBSLlmvbY%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5MDMwMzM5NywibmJmIjoxNzkwMjk5Nzk3LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ._D4tcc4yRahqOzhJ-zlIqyDYbC4UNAkvVV7pvXLus4s&response-content-disposition=attachment%3B%20filename%3DHorizonte-Artificial-v1.8.0-PFD-test-debug.apk&response-content-type=application%2Fvnd.android.package-archive' \
-            -o Horizonte-Artificial-v1.8.0-PFD-test-debug.apk
-          echo "e0d3ed98d2501336a809c69339d3965c33e0cbb7c033e8688a9cfe4694839ac6  Horizonte-Artificial-v1.8.0-PFD-test-debug.apk" | sha256sum -c -
-          test "$(stat -c%s Horizonte-Artificial-v1.8.0-PFD-test-debug.apk)" = "159822626"
-          ls -lh Horizonte-Artificial-v1.8.0-PFD-test-debug.apk
+            'https://release-assets.githubusercontent.com/github-production-release-asset/1317262216/af32fe20-1d38-4883-86d5-b7537f797396?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-09-22T19%3A26%3A19Z&rscd=attachment%3B+filename%3DHorizonte-Artificial-v1.5.1-portrait-safety-debug.apk&rsct=application%2Fvnd.android.package-archive&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-09-22T18%3A25%3A50Z&ske=2026-09-22T19%3A26%3A19Z&sks=b&skv=2018-11-09&sig=OZaRBCL2Spiv7kwGJr1H2ONlGlgjjK7oznlBJrTfe1Y%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5MDEwNjAyOCwibmJmIjoxNzkwMTAyNDI4LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.Uv_IJigs5tzerygfvEZw_IhkzkLZqE3pKVdLkoYrr-c&response-content-disposition=attachment%3B%20filename%3DHorizonte-Artificial-v1.5.1-portrait-safety-debug.apk&response-content-type=application%2Fvnd.android.package-archive' \
+            -o Horizonte-Artificial-v1.5.1-portrait-safety-debug.apk
+          echo "fd6905f1222785a27d8d3a65d85dd11e9494abe212cdef9f3b3af4c4347ab3bc  Horizonte-Artificial-v1.5.1-portrait-safety-debug.apk" | sha256sum -c -
+          ls -lh Horizonte-Artificial-v1.5.1-portrait-safety-debug.apk
 
       - name: Publish temporary public release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="temp-horizonte-v1.8.0-handoff"
+          TAG="temp-horizonte-v1.5.1-handoff"
           gh release delete "$TAG" --repo "${GITHUB_REPOSITORY}" --yes >/dev/null 2>&1 || true
           git tag -d "$TAG" >/dev/null 2>&1 || true
           gh release create "$TAG" \
-            Horizonte-Artificial-v1.8.0-PFD-test-debug.apk \
+            Horizonte-Artificial-v1.5.1-portrait-safety-debug.apk \
             --repo "${GITHUB_REPOSITORY}" \
-            --title "TEMP Horizonte V1.8.0 APK" \
+            --title "TEMP Horizonte V1.5.1 APK" \
             --notes "Temporary handoff file for ChatGPT transfer."
