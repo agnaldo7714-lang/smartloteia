@@ -1,0 +1,24 @@
+name: horizonte_artificial
+description: Horizonte Artificial experimental para smartphone usando sensores internos, GNSS e barometro.
+publish_to: 'none'
+version: 1.8.1+9
+
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+  flutter: '>=3.38.1'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sensors_plus: ^7.1.0
+  geolocator: ^14.0.3
+  path_provider: ^2.1.6
+  share_plus: ^13.3.0
+  cross_file: ^0.3.5+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
