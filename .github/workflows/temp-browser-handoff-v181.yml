@@ -1,0 +1,91 @@
+name: Temp Browser Handoff Horizonte V1.8.1
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/temp-browser-handoff-v181.yml'
+  workflow_dispatch:
+
+jobs:
+  handoff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Download APK through Gofile web UI
+        run: |
+          cat > /tmp/download.mjs <<'JS'
+          import { chromium } from 'playwright';
+          import fs from 'fs';
+
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({acceptDownloads:true});
+
+          await page.goto('https://gofile.io/d/9fhCi2Dq', {
+            waitUntil: 'domcontentloaded',
+            timeout: 120000
+          });
+
+          const target = 'Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk';
+          await page.getByText(target, {exact:false}).first().waitFor({timeout:120000});
+
+          const downloadPromise = page.waitForEvent('download', {timeout:120000});
+
+          const row = page.getByText(target, {exact:false}).first();
+          await row.click();
+          await page.waitForTimeout(1500);
+
+          const candidates = [
+            page.getByRole('button', {name:/download/i}).first(),
+            page.getByRole('link', {name:/download/i}).first(),
+            page.locator('button').filter({hasText:/download/i}).first(),
+            page.locator('a').filter({hasText:/download/i}).first(),
+          ];
+
+          let clicked=false;
+          for (const el of candidates) {
+            try {
+              if (await el.isVisible({timeout:2000})) {
+                await el.click();
+                clicked=true;
+                break;
+              }
+            } catch {}
+          }
+
+          if (!clicked) {
+            await row.dblclick();
+          }
+
+          const download = await downloadPromise;
+          await download.saveAs('Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk');
+          await browser.close();
+
+          const s=fs.statSync('Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk');
+          console.log('Downloaded bytes:',s.size);
+          JS
+          node /tmp/download.mjs
+
+          echo "1d485fa2ad2f73c45feb6cb5e7ebe3b61f8091e432e2c2868d543c569ed96a13  Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk" | sha256sum -c -
+          test "$(stat -c%s Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk)" = "159835506"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Horizonte-Artificial-v1.8.1-PFD-corrected-debug
+          path: Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk
+          if-no-files-found: error
+          retention-days: 1
