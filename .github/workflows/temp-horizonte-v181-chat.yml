@@ -14,11 +14,13 @@ jobs:
       - name: Download corrected V1.8.1 APK
         run: |
           set -euo pipefail
-          URL="https://store3.gofile.io/download/web/00ec7766-f82a-4e7e-89bf-75839bd94a6a/Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk"
+          URL="https://store3.gofile.io/download/direct/00ec7766-f82a-4e7e-89bf-75839bd94a6a/Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk"
           curl -fL --retry 3 \
             -H "Cookie: accountToken=BLzPri9IsnTJtVAEVBKK6uhXfkVu7xqV" \
             "$URL" \
             -o Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk
+          stat -c '%s' Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk
+          sha256sum Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk
           echo "1d485fa2ad2f73c45feb6cb5e7ebe3b61f8091e432e2c2868d543c569ed96a13  Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk" | sha256sum -c -
           test "$(stat -c%s Horizonte-Artificial-v1.8.1-PFD-corrected-debug.apk)" = "159835506"
 
