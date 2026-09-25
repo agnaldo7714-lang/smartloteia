@@ -1,0 +1,31 @@
+name: Horizonte V1.8.1 APK Artifact Handoff
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'horizonte-v181-artifact-trigger.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  handoff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download validated APK
+        run: |
+          set -euo pipefail
+          URL="https://github.com/agnaldo7714-lang/smartloteia/releases/download/temp-horizonte-v1.8.1-handoff/Horizonte-Artificial-v1.8.1-PFD-test-debug.apk"
+          curl -fL --retry 3 "$URL" -o Horizonte-Artificial-v1.8.1-PFD-test-debug.apk
+          echo "7e39ca4b020497528dc0bf686f6f6f67a5d5ee59728f8cc7f59f82c2544ef1e7  Horizonte-Artificial-v1.8.1-PFD-test-debug.apk" | sha256sum -c -
+          test "$(stat -c%s Horizonte-Artificial-v1.8.1-PFD-test-debug.apk)" = "159823310"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Horizonte-Artificial-v1.8.1-PFD-test-debug
+          path: Horizonte-Artificial-v1.8.1-PFD-test-debug.apk
+          if-no-files-found: error
+          retention-days: 1
