@@ -2,7 +2,7 @@ name: ADSB Teixeira Diagnostic
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - '.github/workflows/adsb-teixeira-diagnostic.yml'
 
@@ -13,38 +13,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Compare ADS-B sources around Teixeira
+      - name: Query sources
+        shell: bash
         run: |
-          set -euo pipefail
-          LAT="-17.539"
-          LON="-39.743"
+          LAT='-17.539'
+          LON='-39.743'
           for R in 40 100; do
-            for BASE in               "https://api.adsb.lol/v2/point"               "https://opendata.adsb.fi/api/v3/lat"
-            do
-              if [[ "$BASE" == *"adsb.lol"* ]]; then
-                URL="$BASE/$LAT/$LON/$R"
-              else
-                URL="$BASE/$LAT/lon/$LON/dist/$R"
-              fi
-              echo "=== $URL ==="
-              BODY="$(curl -fsSL --max-time 15 -A 'HorizonteArtificial diagnostic' -H 'Accept: application/json' "$URL")"
-              python - "$BODY" <<'PY'
-import json,sys
-d=json.loads(sys.argv[1])
-ac=d.get('ac') or []
-print("count=",len(ac))
-for x in ac[:30]:
-    print({
-      "hex":x.get("hex"),
-      "flight":x.get("flight"),
-      "lat":x.get("lat"),
-      "lon":x.get("lon"),
-      "alt_baro":x.get("alt_baro"),
-      "gs":x.get("gs"),
-      "track":x.get("track"),
-      "seen_pos":x.get("seen_pos"),
-      "seen":x.get("seen"),
-    })
-PY
-            done
+            echo "=== ADSB.LOL radius $R NM ==="
+            curl -fsSL --max-time 15 -A 'HorizonteArtificial diagnostic' \
+              "https://api.adsb.lol/v2/point/$LAT/$LON/$R" \
+              -o /tmp/lol.json
+            jq '{count:(.ac|length), aircraft:(.ac|map({hex,flight,lat,lon,alt_baro,gs,track,seen_pos,seen})|.[0:30])}' /tmp/lol.json
+
+            echo "=== ADSB.FI radius $R NM ==="
+            curl -fsSL --max-time 15 -A 'HorizonteArtificial diagnostic' \
+              "https://opendata.adsb.fi/api/v3/lat/$LAT/lon/$LON/dist/$R" \
+              -o /tmp/fi.json
+            jq '{count:(.ac|length), aircraft:(.ac|map({hex,flight,lat,lon,alt_baro,gs,track,seen_pos,seen})|.[0:30])}' /tmp/fi.json
           done
